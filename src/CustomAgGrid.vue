@@ -1,18 +1,18 @@
 <template>
   <div class="ag-grid-wrapper">
-      <div 
-          ref="agGridElement"
-          class="ag-grid-container"
-          :class="[gridThemeClass, { 'is-loading': gridState.isLoading }]"
-      >
-          <transition name="fade">
-              <div v-if="gridState.isLoading" class="loading-overlay">
-                  <div class="loading-content">
-                      {{ content.loadingMessage || 'Updating...' }}
-                  </div>
-              </div>
-          </transition>
-      </div>
+    <div 
+        ref="agGridElement"
+        class="ag-grid-container"
+        :class="[gridThemeClass, { 'is-loading': gridState.isLoading }]"
+    >
+        <transition name="fade">
+            <div v-if="gridState.isLoading" class="loading-overlay">
+                <div class="loading-content">
+                    {{ content.loadingMessage || 'Updating...' }}
+                </div>
+            </div>
+        </transition>
+    </div>
   </div>
 </template>
 
@@ -109,7 +109,7 @@ export default {
           }, 100);
       }, 150);
 
-      const loadThemeCSS = async (theme) => {
+      const loadThemeCSS = async (theme, customParams = {}) => {
           currentThemeLinks.forEach(link => {
               if (link && link.parentNode) {
                   link.parentNode.removeChild(link);
@@ -120,7 +120,7 @@ export default {
           return new Promise((resolve, reject) => {
               const baseLink = document.createElement('link');
               baseLink.rel = 'stylesheet';
-              baseLink.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.min.css';
+              baseLink.href = `https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.min.css`;
               
               const themeLink = document.createElement('link');
               themeLink.rel = 'stylesheet';
@@ -141,6 +141,13 @@ export default {
               document.head.appendChild(themeLink);
               
               currentThemeLinks = [baseLink, themeLink];
+
+              // Apply custom parameters if any
+              if (customParams) {
+                  // Example of applying custom parameters
+                  document.documentElement.style.setProperty('--ag-accent-color', customParams.accentColor || '#0086F4');
+                  // Add more custom parameter applications as needed
+              }
           });
       };
 
@@ -164,7 +171,7 @@ export default {
 
           try {
               const theme = props.content?.theme || 'quartz';
-              await loadThemeCSS(theme);
+              await loadThemeCSS(theme, props.content?.customThemeParams || {});
               setGridState({ ...gridState.value, cssLoaded: true, currentTheme: theme });
 
               const agGrid = await loadGridScript();
