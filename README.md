@@ -63,21 +63,6 @@ A powerful data grid component with smooth state transitions and enhanced loadin
 5. **Event Handling:**
    - The component emits events such as `cellValueChanged`, `rowSelected`, and `error` for handling interactions and errors.
 
-### Example
-
-```html
-<CustomAgGrid
-  :tableData="myData"
-  :columnDefs="myColumnDefs"
-  xanoEndpoint="https://api.xano.io/v1/my-endpoint"
-  :xanoHeaders="{ Authorization: 'Bearer my-token' }"
-  theme="quartz"
-  :pageSize="50"
-  :enableFiltering="true"
-  :enableSorting="true"
-  loadingMessage="Loading data..."
-/>
-
 ### Notes
 
 - Ensure your Xano API is set up to handle the data structure and requests from the AG Grid component.
