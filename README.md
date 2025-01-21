@@ -19,13 +19,13 @@ A powerful data grid component with smooth state transitions and enhanced loadin
 |----------|-------------|------|:--------:|
 | tableData | Data array to display in grid | Array | Yes |
 | columnDefs | Column definitions for the grid | Array | Yes |
-| xanoEndpoint | Xano API endpoint for updates | String | Yes |
-| xanoHeaders | Custom headers for Xano requests | Object | Yes |
-| theme | Visual theme for the grid | String | Yes |
+| xanoEndpoint | Xano API endpoint for updates | Text | Yes |
+| xanoHeaders | Custom headers for Xano API | Object | Yes |
+| theme | Grid theme selection | TextSelect | Yes |
 | pageSize | Number of rows per page | Number | Yes |
-| enableFiltering | Enable column filtering | Boolean | Yes |
-| enableSorting | Enable column sorting | Boolean | Yes |
-| loadingMessage | Message displayed during loading | String | Yes |
+| enableFiltering | Enable column filters | OnOff | Yes |
+| enableSorting | Enable column sorting | OnOff | Yes |
+| loadingMessage | Message to show during updates | Text | Yes |
 
 ### Events
 | Event | Description | Data |
@@ -62,6 +62,21 @@ A powerful data grid component with smooth state transitions and enhanced loadin
 
 5. **Event Handling:**
    - The component emits events such as `cellValueChanged`, `rowSelected`, and `error` for handling interactions and errors.
+
+### Example
+
+```html
+<CustomAgGrid
+  :tableData="myData"
+  :columnDefs="myColumnDefs"
+  xanoEndpoint="https://api.xano.io/v1/my-endpoint"
+  :xanoHeaders="{ Authorization: 'Bearer my-token' }"
+  theme="quartz"
+  :pageSize="50"
+  :enableFiltering="true"
+  :enableSorting="true"
+  loadingMessage="Loading data..."
+/>
 
 ### Notes
 
