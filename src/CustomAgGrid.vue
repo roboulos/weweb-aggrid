@@ -108,65 +108,54 @@
             }, 100);
         }, 150);
   
-        const loadThemeCSS = async (theme) => {
-            currentThemeLinks.forEach(link => {
-                if (link && link.parentNode) {
-                    link.parentNode.removeChild(link);
-                }
-            });
-            currentThemeLinks = [];
-  
-            return new Promise((resolve, reject) => {
-                const baseLink = document.createElement('link');
-                baseLink.rel = 'stylesheet';
-                baseLink.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.min.css';
-                
-                const themeLink = document.createElement('link');
-                themeLink.rel = 'stylesheet';
-                themeLink.href = `https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-${theme}.min.css`;
-  
-                let loadedCount = 0;
-                const onLoad = () => {
-                    loadedCount++;
-                    if (loadedCount === 2) resolve();
-                };
-  
-                baseLink.onload = onLoad;
-                themeLink.onload = onLoad;
-                baseLink.onerror = reject;
-                themeLink.onerror = reject;
-  
-                document.head.appendChild(baseLink);
-                document.head.appendChild(themeLink);
-                
-                currentThemeLinks = [baseLink, themeLink];
-            });
-        };
-  
-        const loadGridScript = () => {
-            return new Promise((resolve, reject) => {
-                if (window.agGrid) {
-                    resolve(window.agGrid);
-                    return;
-                }
-  
+        // Function to load AG Grid resources dynamically
+        function loadAgGridResources(theme) {
+            // Ensure resources are loaded only once
+            if (!window.__agGridResourcesLoaded) {
+                window.__agGridResourcesLoaded = true;
+
+                // Load main AG Grid script
                 const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js';
-                script.onload = () => resolve(window.agGrid);
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
-        };
-  
+                script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.js';
+                document.body.appendChild(script);
+
+                // Load AG Grid base styles
+                const styleGrid = document.createElement('link');
+                styleGrid.rel = 'stylesheet';
+                styleGrid.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css';
+                document.head.appendChild(styleGrid);
+            }
+
+            // Remove any existing theme styles
+            const existingThemeLink = document.querySelector('link[data-ag-theme]');
+            if (existingThemeLink) {
+                existingThemeLink.parentNode.removeChild(existingThemeLink);
+            }
+
+            // Load the selected theme
+            const styleTheme = document.createElement('link');
+            styleTheme.rel = 'stylesheet';
+            styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${theme}.css`;
+            styleTheme.setAttribute('data-ag-theme', theme);
+            document.head.appendChild(styleTheme);
+        }
+
         const initializeGrid = async () => {
             if (!agGridElement.value) return;
   
             try {
                 const theme = props.content?.theme || 'quartz';
-                await loadThemeCSS(theme);
+                loadAgGridResources(theme);
                 setGridState({ ...gridState.value, cssLoaded: true, currentTheme: theme });
   
-                const agGrid = await loadGridScript();
+                const agGrid = await new Promise(resolve => {
+                    const intervalId = setInterval(() => {
+                        if (window.agGrid) {
+                            clearInterval(intervalId);
+                            resolve(window.agGrid);
+                        }
+                    }, 100);
+                });
                 setGridState({ ...gridState.value, scriptLoaded: true });
   
                 const gridOptions = {
