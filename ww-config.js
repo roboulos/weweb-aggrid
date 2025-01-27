@@ -38,7 +38,10 @@ export default {
                     defaultValue: {
                         field: '',
                         headerName: '',
-                        editable: true
+                        editable: true,
+                        width: 100, // Default width
+                        sortable: true, // Example additional property
+                        filter: true // Example additional property
                     },
                     options: {
                         item: {
@@ -50,12 +53,24 @@ export default {
                             headerName: {
                                 label: 'Header',
                                 type: 'Text',
-                                options: { placeholder: 'Column header' }
+                                options: { placeholder: 'Column header name' }
                             },
                             editable: {
                                 label: 'Editable',
-                                type: 'OnOff',
-                                defaultValue: true
+                                type: 'Boolean'
+                            },
+                            width: {
+                                label: 'Width',
+                                type: 'Number',
+                                options: { min: 50, max: 500 }
+                            },
+                            sortable: {
+                                label: 'Sortable',
+                                type: 'Boolean'
+                            },
+                            filter: {
+                                label: 'Filter',
+                                type: 'Boolean'
                             }
                         }
                     }
