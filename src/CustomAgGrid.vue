@@ -196,22 +196,29 @@
                             gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
                         }
   
+                        // Temporarily comment out sizeColumnsToFit to test column width settings
+                        // params.api.sizeColumnsToFit({
+                        //     defaultMinWidth: 150,
+                        //     padding: 20
+                        // });
+  
                         setTimeout(() => {
-                            params.api.sizeColumnsToFit({
-                                defaultMinWidth: 150,
-                                padding: 20
-                            });
+                            // params.api.sizeColumnsToFit({
+                            //     defaultMinWidth: 150,
+                            //     padding: 20
+                            // });
                         }, 100);
   
                         const resizeObserver = new ResizeObserver(() => {
                             if (gridApi) {
-                                gridApi.sizeColumnsToFit({
-                                    defaultMinWidth: 150,
-                                    padding: 20
-                                });
+                                // gridApi.sizeColumnsToFit({
+                                //     defaultMinWidth: 150,
+                                //     padding: 20
+                                // });
                             }
                         });
-                        resizeObserver.observe(agGridElement.value);
+                        // resizeObserver.observe(agGridElement.value);
+                        // resizeObserver.disconnect();
                     },
   
                     onFilterChanged: () => {
