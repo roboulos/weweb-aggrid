@@ -64,7 +64,6 @@
             filter: props.content?.enableFiltering ?? true,
             resizable: true,
             minWidth: 150,
-            flex: 1,
             autoHeight: true,
             wrapText: true,
             suppressKeyboardEvent: params => gridState.value.isLoading,
