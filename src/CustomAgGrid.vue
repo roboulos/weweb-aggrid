@@ -108,35 +108,28 @@
             }, 100);
         }, 150);
   
-        // Function to load AG Grid resources dynamically
+        // Ensure AG Grid resources are loaded
         function loadAgGridResources(theme) {
-            console.log('Loading AG Grid resources for theme:', theme);
-            // Ensure resources are loaded only once
+            console.log('Attempting to load AG Grid resources for theme:', theme);
             if (!window.__agGridResourcesLoaded) {
                 window.__agGridResourcesLoaded = true;
-
-                // Load main AG Grid script
-                console.log('Loading AG Grid script');
+                console.log('Loading AG Grid script and styles');
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.js';
                 document.body.appendChild(script);
 
-                // Load AG Grid base styles
-                console.log('Loading AG Grid base styles');
                 const styleGrid = document.createElement('link');
                 styleGrid.rel = 'stylesheet';
                 styleGrid.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css';
                 document.head.appendChild(styleGrid);
             }
 
-            // Remove any existing theme styles
             console.log('Removing existing theme styles');
             const existingThemeLink = document.querySelector('link[data-ag-theme]');
             if (existingThemeLink) {
                 existingThemeLink.parentNode.removeChild(existingThemeLink);
             }
 
-            // Load the selected theme
             console.log('Loading selected theme:', theme);
             const styleTheme = document.createElement('link');
             styleTheme.rel = 'stylesheet';
@@ -145,16 +138,12 @@
             document.head.appendChild(styleTheme);
         }
 
-        // Call the function to load AG Grid resources after DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAgGridResources(props.content?.theme || 'quartz'); // Replace 'quartz' with the desired theme
-        });
-
-        // Ensure AG Grid is loaded before initializing the grid
+        // Initialize AG Grid after Vue component is mounted
         function initializeAgGrid() {
-            const gridDiv = agGridElement.value; // Select the grid container element
-            if (window.agGrid) { // Check if AG Grid library is loaded
+            console.log('Checking if AG Grid is loaded');
+            if (window.agGrid) {
                 console.log('AG Grid library loaded successfully');
+                const gridDiv = agGridElement.value;
                 const gridOptions = {
                     columnDefs: props.content?.columnDefs || [],
                     defaultColDef: defaultColDef.value,
@@ -169,44 +158,20 @@
                     animateRows: true,
                     maintainFilterStateOnDataChange: true,
                     suppressFlashOnCellValueChange: true,
-  
+
                     onGridReady: (params) => {
                         console.log('Grid is ready');
                         gridApi = params.api;
                         gridColumnApi = params.columnApi;
-                        
+
                         if (gridState.value.filterModel) {
                             gridApi.setFilterModel(gridState.value.filterModel);
                         }
                         if (gridState.value.sortModel) {
                             gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
                         }
-  
-                        // Temporarily comment out sizeColumnsToFit to test column width settings
-                        // params.api.sizeColumnsToFit({
-                        //     defaultMinWidth: 150,
-                        //     padding: 20
-                        // });
-  
-                        setTimeout(() => {
-                            // params.api.sizeColumnsToFit({
-                            //     defaultMinWidth: 150,
-                            //     padding: 20
-                            // });
-                        }, 100);
-  
-                        const resizeObserver = new ResizeObserver(() => {
-                            if (gridApi) {
-                                // gridApi.sizeColumnsToFit({
-                                //     defaultMinWidth: 150,
-                                //     padding: 20
-                                // });
-                            }
-                        });
-                        // resizeObserver.observe(agGridElement.value);
-                        // resizeObserver.disconnect();
                     },
-  
+
                     onFilterChanged: () => {
                         if (!gridApi) return;
                         const newFilterModel = gridApi.getFilterModel();
@@ -216,7 +181,7 @@
                             filterModel: newFilterModel
                         });
                     },
-  
+
                     onSortChanged: () => {
                         if (!gridColumnApi) return;
                         const newSortModel = gridColumnApi.getColumnState();
@@ -225,9 +190,9 @@
                             sortModel: newSortModel
                         });
                     },
-  
+
                     onCellValueChanged: handleCellValueChanged,
-                        
+
                     onRowSelected: (event) => {
                         if (event.node.isSelected()) {
                             emit('trigger-event', {
@@ -237,11 +202,11 @@
                         }
                     }
                 };
-  
+
                 console.log('Initializing AG Grid with options:', gridOptions);
-                new agGrid.Grid(gridDiv, gridOptions); // Initialize the grid
+                new agGrid.Grid(gridDiv, gridOptions);
             } else {
-                console.error('AG Grid library is not loaded'); // Error handling if AG Grid is not loaded
+                console.error('AG Grid library is not loaded');
             }
         }
 
@@ -400,7 +365,10 @@
             }
         };
   
+        // Use Vue's onMounted lifecycle hook to initialize the grid
         onMounted(() => {
+            console.log('Vue component mounted');
+            loadAgGridResources(props.content?.theme || 'quartz');
             initializeGrid();
         });
   
