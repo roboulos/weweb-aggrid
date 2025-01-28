@@ -108,20 +108,15 @@
             }, 100);
         }, 150);
   
-        // Function to ensure AG Grid resources are loaded
+        // Function to load AG Grid resources
         function loadAgGridResources(theme) {
-            console.log('Attempting to load AG Grid resources for theme:', theme);
+            console.log('Loading AG Grid resources for theme:', theme);
+            
+            // Load main AG Grid script if not already loaded
             if (!window.__agGridResourcesLoaded) {
                 window.__agGridResourcesLoaded = true;
-                console.log('Loading AG Grid script and styles');
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.js';
-                script.onload = () => {
-                    console.log('AG Grid script loaded successfully');
-                    console.log('Verifying agGrid in global namespace:', window.agGrid);
-                    initializeAgGrid();
-                };
-                script.onerror = () => console.error('Failed to load AG Grid script');
                 document.body.appendChild(script);
 
                 const styleGrid = document.createElement('link');
@@ -130,13 +125,12 @@
                 document.head.appendChild(styleGrid);
             }
 
-            console.log('Removing existing theme styles');
+            // Load theme styles
             const existingThemeLink = document.querySelector('link[data-ag-theme]');
             if (existingThemeLink) {
                 existingThemeLink.parentNode.removeChild(existingThemeLink);
             }
 
-            console.log('Loading selected theme:', theme);
             const styleTheme = document.createElement('link');
             styleTheme.rel = 'stylesheet';
             styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${theme}.css`;
@@ -144,96 +138,106 @@
             document.head.appendChild(styleTheme);
         }
 
-        // Initialize AG Grid after Vue component is mounted
+        // Initialize AG Grid
         function initializeAgGrid() {
-            console.log('Checking if AG Grid is loaded');
-            if (window.agGrid) {
-                console.log('AG Grid library loaded successfully');
-                const gridDiv = agGridElement.value;
-                const gridOptions = {
-                    columnDefs: props.content?.columnDefs || [],
-                    defaultColDef: defaultColDef.value,
-                    rowData: props.content?.tableData || getSampleData(),
-                    pagination: true,
-                    paginationPageSize: props.content?.pageSize || 25,
-                    rowSelection: 'multiple',
-                    enableRangeSelection: true,
-                    enableCellChangeFlash: true,
-                    suppressPropertyNamesCheck: true,
-                    domLayout: 'autoHeight',
-                    animateRows: true,
-                    maintainFilterStateOnDataChange: true,
-                    suppressFlashOnCellValueChange: true,
+            if (!window.agGrid) {
+                console.warn('AG Grid not loaded yet, retrying...');
+                return;
+            }
 
-                    onGridReady: (params) => {
-                        console.log('Grid is ready');
-                        gridApi = params.api;
-                        gridColumnApi = params.columnApi;
+            const gridDiv = agGridElement.value;
+            if (!gridDiv) {
+                console.warn('Grid element not found');
+                return;
+            }
 
-                        if (gridState.value.filterModel) {
-                            gridApi.setFilterModel(gridState.value.filterModel);
-                        }
-                        if (gridState.value.sortModel) {
-                            gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
-                        }
-                    },
+            console.log('Initializing AG Grid');
+            const gridOptions = {
+                columnDefs: props.content?.columnDefs || [],
+                defaultColDef: defaultColDef.value,
+                rowData: props.content?.tableData || getSampleData(),
+                pagination: true,
+                paginationPageSize: props.content?.pageSize || 25,
+                rowSelection: 'multiple',
+                enableRangeSelection: true,
+                enableCellChangeFlash: true,
+                suppressPropertyNamesCheck: true,
+                domLayout: 'autoHeight',
+                animateRows: true,
+                maintainFilterStateOnDataChange: true,
+                suppressFlashOnCellValueChange: true,
 
-                    onFilterChanged: () => {
-                        if (!gridApi) return;
-                        const newFilterModel = gridApi.getFilterModel();
-                        gridApi.redrawRows();
-                        setGridState({
-                            ...gridState.value,
-                            filterModel: newFilterModel
-                        });
-                    },
+                onGridReady: (params) => {
+                    console.log('Grid is ready');
+                    gridApi = params.api;
+                    gridColumnApi = params.columnApi;
 
-                    onSortChanged: () => {
-                        if (!gridColumnApi) return;
-                        const newSortModel = gridColumnApi.getColumnState();
-                        setGridState({
-                            ...gridState.value,
-                            sortModel: newSortModel
-                        });
-                    },
-
-                    onCellValueChanged: handleCellValueChanged,
-
-                    onRowSelected: (event) => {
-                        if (event.node.isSelected()) {
-                            emit('trigger-event', {
-                                name: 'rowSelected',
-                                event: { rowData: event.data }
-                            });
-                        }
+                    if (gridState.value.filterModel) {
+                        gridApi.setFilterModel(gridState.value.filterModel);
                     }
-                };
+                    if (gridState.value.sortModel) {
+                        gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
+                    }
+                },
 
-                console.log('Initializing AG Grid with options:', gridOptions);
-                new agGrid.Grid(gridDiv, gridOptions);
-            } else {
-                console.error('AG Grid library is not loaded');
+                onFilterChanged: () => {
+                    if (!gridApi) return;
+                    const newFilterModel = gridApi.getFilterModel();
+                    gridApi.redrawRows();
+                    setGridState({
+                        ...gridState.value,
+                        filterModel: newFilterModel
+                    });
+                },
+
+                onSortChanged: () => {
+                    if (!gridColumnApi) return;
+                    const newSortModel = gridColumnApi.getColumnState();
+                    setGridState({
+                        ...gridState.value,
+                        sortModel: newSortModel
+                    });
+                },
+
+                onCellValueChanged: handleCellValueChanged,
+                
+                onRowSelected: (event) => {
+                    if (event.node.isSelected()) {
+                        emit('trigger-event', {
+                            name: 'rowSelected',
+                            event: { rowData: event.data }
+                        });
+                    }
+                }
+            };
+
+            try {
+                new window.agGrid.Grid(gridDiv, gridOptions);
+                console.log('Grid initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize grid:', error);
             }
         }
 
         const initializeGrid = async () => {
             if (!agGridElement.value) return;
-  
+
             try {
                 const theme = props.content?.theme || 'quartz';
+                loadAgGridResources(theme);
                 setGridState({ ...gridState.value, cssLoaded: true, currentTheme: theme });
-  
-                const agGrid = await new Promise(resolve => {
-                    const intervalId = setInterval(() => {
-                        if (window.agGrid) {
-                            clearInterval(intervalId);
-                            resolve(window.agGrid);
-                        }
-                    }, 100);
-                });
-                setGridState({ ...gridState.value, scriptLoaded: true });
-  
-                initializeAgGrid();
+
+                // Wait for AG Grid to be available
+                const checkInterval = setInterval(() => {
+                    if (window.agGrid) {
+                        clearInterval(checkInterval);
+                        setGridState({ ...gridState.value, scriptLoaded: true });
+                        initializeAgGrid();
+                    }
+                }, 100);
+
+                // Clear interval after 5 seconds to prevent infinite checking
+                setTimeout(() => clearInterval(checkInterval), 5000);
             } catch (error) {
                 console.error('Failed to initialize AG Grid:', error);
                 setGridState({
@@ -249,7 +253,7 @@
                 });
             }
         };
-  
+
         const handleCellValueChanged = async (event) => {
             if (!props.content?.xanoEndpoint || isUpdating || gridState.value.isLoading) return;
   
@@ -374,7 +378,7 @@
         // Use Vue's onMounted lifecycle hook to initialize the grid
         onMounted(() => {
             console.log('Vue component mounted');
-            loadAgGridResources(props.content?.theme || 'quartz');
+            initializeGrid();
         });
   
         onBeforeUnmount(() => {
