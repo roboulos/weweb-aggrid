@@ -116,7 +116,11 @@
                 console.log('Loading AG Grid script and styles');
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.js';
-                script.onload = () => console.log('AG Grid script loaded successfully');
+                script.onload = () => {
+                    console.log('AG Grid script loaded successfully');
+                    console.log('Verifying agGrid in global namespace:', window.agGrid);
+                    initializeAgGrid();
+                };
                 script.onerror = () => console.error('Failed to load AG Grid script');
                 document.body.appendChild(script);
 
@@ -371,7 +375,6 @@
         onMounted(() => {
             console.log('Vue component mounted');
             loadAgGridResources(props.content?.theme || 'quartz');
-            initializeGrid();
         });
   
         onBeforeUnmount(() => {
