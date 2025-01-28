@@ -145,102 +145,104 @@
             document.head.appendChild(styleTheme);
         }
 
+        // Call the function to load AG Grid resources after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAgGridResources(props.content?.theme || 'quartz'); // Replace 'quartz' with the desired theme
+        });
+
         // Ensure AG Grid is loaded before initializing the grid
         function initializeAgGrid() {
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log('DOM fully loaded and parsed');
-                const gridDiv = agGridElement.value; // Select the grid container element
-                if (window.agGrid) { // Check if AG Grid library is loaded
-                    console.log('AG Grid library loaded successfully');
-                    const gridOptions = {
-                        columnDefs: props.content?.columnDefs || [],
-                        defaultColDef: defaultColDef.value,
-                        rowData: props.content?.tableData || getSampleData(),
-                        pagination: true,
-                        paginationPageSize: props.content?.pageSize || 25,
-                        rowSelection: 'multiple',
-                        enableRangeSelection: true,
-                        enableCellChangeFlash: true,
-                        suppressPropertyNamesCheck: true,
-                        domLayout: 'autoHeight',
-                        animateRows: true,
-                        maintainFilterStateOnDataChange: true,
-                        suppressFlashOnCellValueChange: true,
+            const gridDiv = agGridElement.value; // Select the grid container element
+            if (window.agGrid) { // Check if AG Grid library is loaded
+                console.log('AG Grid library loaded successfully');
+                const gridOptions = {
+                    columnDefs: props.content?.columnDefs || [],
+                    defaultColDef: defaultColDef.value,
+                    rowData: props.content?.tableData || getSampleData(),
+                    pagination: true,
+                    paginationPageSize: props.content?.pageSize || 25,
+                    rowSelection: 'multiple',
+                    enableRangeSelection: true,
+                    enableCellChangeFlash: true,
+                    suppressPropertyNamesCheck: true,
+                    domLayout: 'autoHeight',
+                    animateRows: true,
+                    maintainFilterStateOnDataChange: true,
+                    suppressFlashOnCellValueChange: true,
   
-                        onGridReady: (params) => {
-                            console.log('Grid is ready');
-                            gridApi = params.api;
-                            gridColumnApi = params.columnApi;
-                            
-                            if (gridState.value.filterModel) {
-                                gridApi.setFilterModel(gridState.value.filterModel);
-                            }
-                            if (gridState.value.sortModel) {
-                                gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
-                            }
+                    onGridReady: (params) => {
+                        console.log('Grid is ready');
+                        gridApi = params.api;
+                        gridColumnApi = params.columnApi;
+                        
+                        if (gridState.value.filterModel) {
+                            gridApi.setFilterModel(gridState.value.filterModel);
+                        }
+                        if (gridState.value.sortModel) {
+                            gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
+                        }
   
-                            // Temporarily comment out sizeColumnsToFit to test column width settings
+                        // Temporarily comment out sizeColumnsToFit to test column width settings
+                        // params.api.sizeColumnsToFit({
+                        //     defaultMinWidth: 150,
+                        //     padding: 20
+                        // });
+  
+                        setTimeout(() => {
                             // params.api.sizeColumnsToFit({
                             //     defaultMinWidth: 150,
                             //     padding: 20
                             // });
+                        }, 100);
   
-                            setTimeout(() => {
-                                // params.api.sizeColumnsToFit({
+                        const resizeObserver = new ResizeObserver(() => {
+                            if (gridApi) {
+                                // gridApi.sizeColumnsToFit({
                                 //     defaultMinWidth: 150,
                                 //     padding: 20
                                 // });
-                            }, 100);
-  
-                            const resizeObserver = new ResizeObserver(() => {
-                                if (gridApi) {
-                                    // gridApi.sizeColumnsToFit({
-                                    //     defaultMinWidth: 150,
-                                    //     padding: 20
-                                    // });
-                                }
-                            });
-                            // resizeObserver.observe(agGridElement.value);
-                            // resizeObserver.disconnect();
-                        },
-  
-                        onFilterChanged: () => {
-                            if (!gridApi) return;
-                            const newFilterModel = gridApi.getFilterModel();
-                            gridApi.redrawRows();
-                            setGridState({
-                                ...gridState.value,
-                                filterModel: newFilterModel
-                            });
-                        },
-  
-                        onSortChanged: () => {
-                            if (!gridColumnApi) return;
-                            const newSortModel = gridColumnApi.getColumnState();
-                            setGridState({
-                                ...gridState.value,
-                                sortModel: newSortModel
-                            });
-                        },
-  
-                        onCellValueChanged: handleCellValueChanged,
-                        
-                        onRowSelected: (event) => {
-                            if (event.node.isSelected()) {
-                                emit('trigger-event', {
-                                    name: 'rowSelected',
-                                    event: { rowData: event.data }
-                                });
                             }
-                        }
-                    };
+                        });
+                        // resizeObserver.observe(agGridElement.value);
+                        // resizeObserver.disconnect();
+                    },
   
-                    console.log('Initializing AG Grid with options:', gridOptions);
-                    new agGrid.Grid(gridDiv, gridOptions); // Initialize the grid
-                } else {
-                    console.error('AG Grid library is not loaded'); // Error handling if AG Grid is not loaded
-                }
-            });
+                    onFilterChanged: () => {
+                        if (!gridApi) return;
+                        const newFilterModel = gridApi.getFilterModel();
+                        gridApi.redrawRows();
+                        setGridState({
+                            ...gridState.value,
+                            filterModel: newFilterModel
+                        });
+                    },
+  
+                    onSortChanged: () => {
+                        if (!gridColumnApi) return;
+                        const newSortModel = gridColumnApi.getColumnState();
+                        setGridState({
+                            ...gridState.value,
+                            sortModel: newSortModel
+                        });
+                    },
+  
+                    onCellValueChanged: handleCellValueChanged,
+                        
+                    onRowSelected: (event) => {
+                        if (event.node.isSelected()) {
+                            emit('trigger-event', {
+                                name: 'rowSelected',
+                                event: { rowData: event.data }
+                            });
+                        }
+                    }
+                };
+  
+                console.log('Initializing AG Grid with options:', gridOptions);
+                new agGrid.Grid(gridDiv, gridOptions); // Initialize the grid
+            } else {
+                console.error('AG Grid library is not loaded'); // Error handling if AG Grid is not loaded
+            }
         }
 
         const initializeGrid = async () => {
@@ -248,7 +250,6 @@
   
             try {
                 const theme = props.content?.theme || 'quartz';
-                loadAgGridResources(theme);
                 setGridState({ ...gridState.value, cssLoaded: true, currentTheme: theme });
   
                 const agGrid = await new Promise(resolve => {
