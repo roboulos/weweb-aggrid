@@ -110,16 +110,19 @@
   
         // Function to load AG Grid resources dynamically
         function loadAgGridResources(theme) {
+            console.log('Loading AG Grid resources for theme:', theme);
             // Ensure resources are loaded only once
             if (!window.__agGridResourcesLoaded) {
                 window.__agGridResourcesLoaded = true;
 
                 // Load main AG Grid script
+                console.log('Loading AG Grid script');
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.js';
                 document.body.appendChild(script);
 
                 // Load AG Grid base styles
+                console.log('Loading AG Grid base styles');
                 const styleGrid = document.createElement('link');
                 styleGrid.rel = 'stylesheet';
                 styleGrid.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css';
@@ -127,12 +130,14 @@
             }
 
             // Remove any existing theme styles
+            console.log('Removing existing theme styles');
             const existingThemeLink = document.querySelector('link[data-ag-theme]');
             if (existingThemeLink) {
                 existingThemeLink.parentNode.removeChild(existingThemeLink);
             }
 
             // Load the selected theme
+            console.log('Loading selected theme:', theme);
             const styleTheme = document.createElement('link');
             styleTheme.rel = 'stylesheet';
             styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${theme}.css`;
@@ -143,8 +148,10 @@
         // Ensure AG Grid is loaded before initializing the grid
         function initializeAgGrid() {
             document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM fully loaded and parsed');
                 const gridDiv = agGridElement.value; // Select the grid container element
                 if (window.agGrid) { // Check if AG Grid library is loaded
+                    console.log('AG Grid library loaded successfully');
                     const gridOptions = {
                         columnDefs: props.content?.columnDefs || [],
                         defaultColDef: defaultColDef.value,
@@ -161,6 +168,7 @@
                         suppressFlashOnCellValueChange: true,
   
                         onGridReady: (params) => {
+                            console.log('Grid is ready');
                             gridApi = params.api;
                             gridColumnApi = params.columnApi;
                             
@@ -227,6 +235,7 @@
                         }
                     };
   
+                    console.log('Initializing AG Grid with options:', gridOptions);
                     new agGrid.Grid(gridDiv, gridOptions); // Initialize the grid
                 } else {
                     console.error('AG Grid library is not loaded'); // Error handling if AG Grid is not loaded
