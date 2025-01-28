@@ -108,7 +108,7 @@
             }, 100);
         }, 150);
   
-        // Ensure AG Grid resources are loaded
+        // Function to ensure AG Grid resources are loaded
         function loadAgGridResources(theme) {
             console.log('Attempting to load AG Grid resources for theme:', theme);
             if (!window.__agGridResourcesLoaded) {
@@ -116,6 +116,8 @@
                 console.log('Loading AG Grid script and styles');
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.js';
+                script.onload = () => console.log('AG Grid script loaded successfully');
+                script.onerror = () => console.error('Failed to load AG Grid script');
                 document.body.appendChild(script);
 
                 const styleGrid = document.createElement('link');
