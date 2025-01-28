@@ -116,7 +116,7 @@
             if (!window.__agGridResourcesLoaded) {
                 window.__agGridResourcesLoaded = true;
                 const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.js';
+                script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js';
                 document.body.appendChild(script);
 
                 const styleGrid = document.createElement('link');
@@ -212,10 +212,26 @@
             };
 
             try {
-                new window.agGrid.Grid(gridDiv, gridOptions);
+                if (typeof window.agGrid.createGrid === 'function') {
+                    window.agGrid.createGrid(gridDiv, gridOptions);
+                } else if (typeof window.agGrid.Grid === 'function') {
+                    new window.agGrid.Grid(gridDiv, gridOptions);
+                } else {
+                    throw new Error('AG Grid initialization method not found');
+                }
                 console.log('Grid initialized successfully');
             } catch (error) {
                 console.error('Failed to initialize grid:', error);
+                // Try alternative initialization after a short delay
+                setTimeout(() => {
+                    try {
+                        const GridClass = window.agGrid.Grid || window.agGrid;
+                        new GridClass(gridDiv, gridOptions);
+                        console.log('Grid initialized successfully using alternative method');
+                    } catch (retryError) {
+                        console.error('Failed to initialize grid after retry:', retryError);
+                    }
+                }, 100);
             }
         }
 
