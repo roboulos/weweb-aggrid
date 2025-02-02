@@ -42,8 +42,8 @@ export default {
               width: 100, // Default width
               sortable: true,
               filter: true,
-              dataType: 'text', // New: default data type (options: text, timestamp, boolean, checkbox, dropdown)
-              dropdownOptions: [] // Optional: provide options if dataType is 'dropdown'
+              dataType: 'text', // new: default data type (text, timestamp, boolean, checkbox, dropdown)
+              dropdownOptions: [] // for dropdown cell editors
             },
             options: {
               item: {
@@ -148,6 +148,7 @@ export default {
         },
         /* wwEditor:end */
       },
+      // Existing theme selector property for legacy CSS themes
       theme: {
         label: { en: 'Grid Theme' },
         type: 'TextSelect',
@@ -164,10 +165,44 @@ export default {
         /* wwEditor:start */
         bindingValidation: {
           type: 'string',
-          tooltip: 'The visual theme for the grid',
+          tooltip: 'The visual theme for the grid (for legacy CSS usage)',
         },
         propertyHelp: {
-          tooltip: 'Select the visual style for the grid',
+          tooltip: 'Select the visual style for the grid if not using a custom theming API',
+        },
+        /* wwEditor:end */
+      },
+      // New property: Allow users to pass a custom AG Grid theme object
+      customTheme: {
+        label: { en: 'Custom Theme' },
+        type: 'Object',
+        section: 'style',
+        bindable: true,
+        defaultValue: null,
+        /* wwEditor:start */
+        bindingValidation: {
+          type: 'object',
+          tooltip: 'Pass a custom AG Grid theme object (generated via the Theme Builder/Theming API)',
+        },
+        propertyHelp: {
+          tooltip: 'Import a theme object such as one generated from the AG Grid Theme Builder (e.g., themeQuartz.withPart(iconSetAlpine).withParams({...}))',
+        },
+        /* wwEditor:end */
+      },
+      // Alternatively, you could add a property for theme parameters if you do not supply a full theme object:
+      themeParams: {
+        label: { en: 'Theme Parameters' },
+        type: 'Object',
+        section: 'style',
+        bindable: true,
+        defaultValue: {},
+        /* wwEditor:start */
+        bindingValidation: {
+          type: 'object',
+          tooltip: 'Theme parameter overrides for AG Grid (e.g., accentColor, headerTextColor)',
+        },
+        propertyHelp: {
+          tooltip: 'Provide custom theme parameters to merge with the default theme',
         },
         /* wwEditor:end */
       },
