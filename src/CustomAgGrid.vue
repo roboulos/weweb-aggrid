@@ -4,7 +4,7 @@
         ref="agGridElement"
         class="ag-grid-container"
         :class="[gridThemeClass, { 'is-loading': gridState.isLoading }]"
-        :style="[gridCustomStyles, { height: '100%', width: '100%' }]"
+        :style="gridCustomStyles"
       >
         <transition name="fade">
           <div v-if="gridState.isLoading" class="loading-overlay">
@@ -20,10 +20,6 @@
   <script>
   import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
   import { debounce } from 'lodash';
-  import 'ag-grid-community/styles/ag-grid.css';
-  import 'ag-grid-community/styles/ag-theme-quartz.css';
-  import { Grid, themeQuartz } from 'ag-grid-community';
-  // Import the default AG Grid theme (Quartz) for use in theme composition
   
   export default {
     props: {
@@ -68,6 +64,9 @@
         '--ag-header-foreground-color': props.content.headerTextColor || '#000000',
         '--ag-border-color': props.content.borderColor || '#E0E0E0',
         '--ag-row-border-color': props.content.borderColor || '#E0E0E0',
+        'width': '100%',
+        'height': '100%',
+        'min-height': '400px'
       }));
 
       // Compute active theme by merging with themeQuartz
@@ -146,20 +145,40 @@
         }, 100);
       }, 150);
   
-      // Load AG Grid resources (scripts and CSS)
+      // Load AG Grid resources
       function loadAgGridResources() {
         console.log('Loading AG Grid resources');
-        // No need to load resources dynamically since we're importing them
-        setGridState({ ...gridState.value, scriptLoaded: true, cssLoaded: true });
+        if (!window.__agGridResourcesLoaded) {
+          window.__agGridResourcesLoaded = true;
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js';
+          document.body.appendChild(script);
+          
+          const styleGrid = document.createElement('link');
+          styleGrid.rel = 'stylesheet';
+          styleGrid.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css';
+          document.head.appendChild(styleGrid);
+          
+          const styleTheme = document.createElement('link');
+          styleTheme.rel = 'stylesheet';
+          styleTheme.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-quartz.css';
+          document.head.appendChild(styleTheme);
+        }
       }
   
       // Initialize AG Grid with the active theme passed via gridOptions
       function initializeAgGrid() {
+        if (!window.agGrid) {
+          console.warn('AG Grid not loaded yet, retrying...');
+          return;
+        }
+
         const gridDiv = agGridElement.value;
         if (!gridDiv) {
           console.warn('Grid element not found');
           return;
         }
+
         console.log('Initializing AG Grid');
         const gridOptions = {
           columnDefs: processedColumnDefs.value,
@@ -221,17 +240,33 @@
           // Pass the active theme object as the grid theme option
           theme: activeTheme.value
         };
-  
+
         try {
-          new Grid(gridDiv, gridOptions);
+          if (typeof window.agGrid.createGrid === 'function') {
+            window.agGrid.createGrid(gridDiv, gridOptions);
+          } else if (typeof window.agGrid.Grid === 'function') {
+            new window.agGrid.Grid(gridDiv, gridOptions);
+          } else {
+            throw new Error('AG Grid initialization method not found');
+          }
           console.log('Grid initialized successfully');
         } catch (error) {
           console.error('Failed to initialize grid:', error);
-          setGridState({ ...gridState.value, errorMessage: 'Failed to initialize grid' });
-          emit('trigger-event', {
-            name: 'error',
-            event: { message: 'Failed to initialize grid', type: 'error' }
-          });
+          // Try alternative initialization after a short delay
+          setTimeout(() => {
+            try {
+              const GridClass = window.agGrid.Grid || window.agGrid;
+              new GridClass(gridDiv, gridOptions);
+              console.log('Grid initialized successfully using alternative method');
+            } catch (retryError) {
+              console.error('Failed to initialize grid after retry:', retryError);
+              setGridState({ ...gridState.value, errorMessage: 'Failed to initialize grid' });
+              emit('trigger-event', {
+                name: 'error',
+                event: { message: 'Failed to initialize grid', type: 'error' }
+              });
+            }
+          }, 100);
         }
       }
   
@@ -331,18 +366,50 @@
         }
       };
   
+      const initializeGrid = async () => {
+        if (!agGridElement.value) return;
+
+        try {
+          loadAgGridResources();
+
+          // Wait for AG Grid to be available (max 5 seconds)
+          const checkInterval = setInterval(() => {
+            if (window.agGrid) {
+              clearInterval(checkInterval);
+              setGridState({ ...gridState.value, scriptLoaded: true });
+              initializeAgGrid();
+            }
+          }, 100);
+
+          setTimeout(() => {
+            clearInterval(checkInterval);
+            if (!window.agGrid) {
+              console.error('Timeout waiting for AG Grid to load');
+              setGridState({
+                ...gridState.value,
+                errorMessage: 'Failed to load AG Grid'
+              });
+            }
+          }, 5000);
+        } catch (error) {
+          console.error('Failed to initialize AG Grid:', error);
+          setGridState({
+            ...gridState.value,
+            errorMessage: 'Failed to initialize grid'
+          });
+          emit('trigger-event', {
+            name: 'error',
+            event: {
+              message: 'Failed to initialize grid',
+              type: 'error'
+            }
+          });
+        }
+      };
+  
       onMounted(() => {
         console.log('Vue component mounted');
-        loadAgGridResources();
-        // Wait for AG Grid to be available (max 5 seconds)
-        const checkInterval = setInterval(() => {
-          if (window.agGrid) {
-            clearInterval(checkInterval);
-            setGridState({ ...gridState.value, scriptLoaded: true });
-            initializeAgGrid();
-          }
-        }, 100);
-        setTimeout(() => clearInterval(checkInterval), 5000);
+        initializeGrid();
       });
   
       onBeforeUnmount(() => {
@@ -372,21 +439,57 @@
     height: 100%;
     min-height: 400px;
     position: relative;
-    display: flex;
-    flex-direction: column;
+    overflow: hidden;
   }
   
   .ag-grid-container {
-    flex: 1;
     width: 100%;
-    min-height: 400px;
+    height: 100%;
+    min-height: inherit;
     position: relative;
+    overflow: auto;
+  
     &.is-loading {
       pointer-events: none;
       opacity: 0.7;
       transition: opacity 0.3s ease-in-out;
     }
+  
+    :deep(.ag-root-wrapper) {
+      border: none;
+    }
+  
+    :deep(.ag-header) {
+      border-bottom: 1px solid var(--ag-border-color, #ddd);
+    }
+  
+    :deep(.ag-cell) {
+      padding: 8px;
+      line-height: 1.4;
+    }
+  
+    :deep(.ag-header-cell) {
+      padding: 8px;
+    }
+  
+    :deep(.ag-row) {
+      transition: background-color 0.3s ease;
+      border-bottom: 1px solid var(--ag-row-border-color, #ddd);
+    }
+  
+    :deep(.ag-row-hover) {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+  
+    :deep(.ag-overlay) {
+      transition: opacity 0.3s ease-in-out;
+    }
+  
+    :deep(.ag-overlay-loading-wrapper) {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
   }
+  
   .loading-overlay {
     position: absolute;
     top: 0;
@@ -399,16 +502,21 @@
     justify-content: center;
     z-index: 1000;
   }
+  
   .loading-content {
     background: white;
     padding: 1rem 2rem;
     border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
-  .fade-enter-active, .fade-leave-active {
+  
+  .fade-enter-active,
+  .fade-leave-active {
     transition: opacity 0.3s ease;
   }
-  .fade-enter-from, .fade-leave-to {
+  
+  .fade-enter-from,
+  .fade-leave-to {
     opacity: 0;
   }
   </style>
