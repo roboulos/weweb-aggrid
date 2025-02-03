@@ -1,3 +1,23 @@
+// Example themeParams that produce a custom theme:
+// {
+//   "accentColor": "#0086F4",
+//   "backgroundColor": "#F1EDE1",
+//   "borderColor": "#98968F",
+//   "borderRadius": 0,
+//   "browserColorScheme": "light",
+//   "chromeBackgroundColor": { "ref": "backgroundColor" },
+//   "fontFamily": { "googleFont": "Pixelify Sans" },
+//   "fontSize": 15,
+//   "foregroundColor": "#605E57",
+//   "headerBackgroundColor": "#E4DAD1",
+//   "headerFontSize": 15,
+//   "headerFontWeight": 700,
+//   "headerTextColor": "#3C3A35",
+//   "rowVerticalPaddingScale": 1.2,
+//   "spacing": 5,
+//   "wrapperBorderRadius": 0
+// }
+
 export default {
   name: "AG Grid Component",
   editor: {
@@ -50,15 +70,13 @@ export default {
                 label: 'Data Type',
                 type: 'TextSelect',
                 defaultValue: 'text',
-                options: {
-                  options: [
-                    { value: 'text', label: 'Text' },
-                    { value: 'timestamp', label: 'Timestamp' },
-                    { value: 'boolean', label: 'Boolean' },
-                    { value: 'checkbox', label: 'Checkbox' },
-                    { value: 'dropdown', label: 'Dropdown' }
-                  ]
-                }
+                options: { options: [
+                  { value: 'text', label: 'Text' },
+                  { value: 'timestamp', label: 'Timestamp' },
+                  { value: 'boolean', label: 'Boolean' },
+                  { value: 'checkbox', label: 'Checkbox' },
+                  { value: 'dropdown', label: 'Dropdown' }
+                ] }
               },
               dropdownOptions: {
                 label: 'Dropdown Options',
@@ -178,7 +196,7 @@ export default {
       },
       propertyHelp: { tooltip: 'Customize the loading message shown during updates' }
     },
-    // Theme override properties
+    // Theme override properties – these will be used to build a custom theme via the theming API.
     accentColor: {
       label: { en: 'Accent Color' },
       type: 'Color',
@@ -232,11 +250,9 @@ export default {
         type: 'string',
         tooltip: 'The visual theme for the grid (for legacy CSS usage)'
       },
-      propertyHelp: {
-        tooltip: 'Select the visual style for the grid if not using custom theme parameters'
-      }
+      propertyHelp: { tooltip: 'Select the visual style for the grid if not using custom theme parameters' }
     },
-    // Allow full custom theme object from the user (if desired)
+    // Allow a full custom theme object (if provided) to override everything else.
     customTheme: {
       label: { en: 'Custom Theme' },
       type: 'Object',
@@ -247,11 +263,9 @@ export default {
         type: 'object',
         tooltip: 'Pass a custom AG Grid theme object (generated via the Theme Builder/Theming API)'
       },
-      propertyHelp: {
-        tooltip: 'Import a theme object such as one generated from the AG Grid Theme Builder'
-      }
+      propertyHelp: { tooltip: 'Import a theme object such as one generated from the AG Grid Theme Builder' }
     },
-    // Allow overriding individual theme parameters (optional alternative)
+    // Alternatively, allow overriding theme parameters individually.
     themeParams: {
       label: { en: 'Theme Parameters' },
       type: 'Object',
@@ -262,9 +276,7 @@ export default {
         type: 'object',
         tooltip: 'Theme parameter overrides for AG Grid (e.g., accentColor, headerTextColor)'
       },
-      propertyHelp: {
-        tooltip: 'Provide custom theme parameters to merge with the default theme'
-      }
+      propertyHelp: { tooltip: 'Provide custom theme parameters to merge with the default theme' }
     }
   },
   triggerEvents: [

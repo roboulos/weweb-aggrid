@@ -55,7 +55,7 @@ export default {
       }
     });
     
-    // Compute legacy theme class based on "theme" property.
+    // Compute legacy theme class from the "theme" property.
     const gridThemeClass = computed(() => `ag-theme-${props.content?.theme || 'quartz'}`);
     
     // Compute inline style overrides from theme properties.
@@ -71,30 +71,25 @@ export default {
       'min-height': '400px'
     }));
     
-    // Inject dynamic CSS overrides by creating a <style> element.
+    // Inject dynamic CSS overrides via a <style> element.
     function applyThemeOverrides() {
       const css = `
-        /* Override grid background */
         .${gridThemeClass.value} .ag-root-wrapper {
           background-color: ${props.content.backgroundColor || '#FFFFFF'} !important;
         }
-        /* Override header background */
         .${gridThemeClass.value} .ag-header {
           background-color: ${props.content.headerBackgroundColor || '#F5F5F5'} !important;
         }
-        /* Override header cell text color */
         .${gridThemeClass.value} .ag-header-cell,
         .${gridThemeClass.value} .ag-header-cell-label {
           color: ${props.content.headerTextColor || '#000000'} !important;
         }
-        /* Override cell and row borders */
         .${gridThemeClass.value} .ag-cell,
         .${gridThemeClass.value} .ag-row,
         .${gridThemeClass.value} .ag-header-cell,
         .${gridThemeClass.value} .ag-root-wrapper {
           border-color: ${props.content.borderColor || '#E0E0E0'} !important;
         }
-        /* Override accent color for icons and focused elements */
         .${gridThemeClass.value} .ag-icon,
         .${gridThemeClass.value} .ag-action-icon,
         .${gridThemeClass.value} .ag-accent {
@@ -110,7 +105,7 @@ export default {
       styleEl.innerHTML = css;
     }
     
-    // Watch for changes in theme properties and reapply the overrides.
+    // Watch theme-related properties and reapply overrides immediately.
     watch(() => [
       props.content.accentColor,
       props.content.backgroundColor,
@@ -119,7 +114,7 @@ export default {
       props.content.borderColor
     ], applyThemeOverrides, { immediate: true });
     
-    // Compute active theme using AG Grid theming API (merging themeQuartz with themeParams/customTheme)
+    // Compute active theme using AG Grid theming API.
     const activeTheme = computed(() => {
       if (props.customTheme && typeof props.customTheme.withParams === 'function') {
         return props.customTheme;
@@ -155,7 +150,7 @@ export default {
             }
             break;
           default:
-            // Default text: no extra formatting.
+          // Default text: no extra formatting.
         }
         return newColDef;
       });
@@ -182,7 +177,7 @@ export default {
       }, 100);
     }, 150);
     
-    // Load AG Grid resources (script and base CSS).
+    // Load AG Grid resources. If custom theme parameters are provided, skip loading legacy theme CSS.
     function loadAgGridResources() {
       console.log('Loading AG Grid resources');
       if (!window.__agGridResourcesLoaded) {
@@ -194,11 +189,18 @@ export default {
         styleGrid.rel = 'stylesheet';
         styleGrid.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css';
         document.head.appendChild(styleGrid);
-        // Load legacy theme CSS as fallback.
+      }
+      // Only load legacy theme CSS if no custom theme parameters or customTheme is provided.
+      if (!(props.content.themeParams && Object.keys(props.content.themeParams).length > 0) && !props.customTheme) {
+        const themeName = props.content?.theme || 'quartz';
+        const existingThemeLink = document.querySelector('link[data-ag-theme]');
+        if (existingThemeLink) {
+          existingThemeLink.parentNode.removeChild(existingThemeLink);
+        }
         const styleTheme = document.createElement('link');
         styleTheme.rel = 'stylesheet';
-        styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-quartz.css`;
-        styleTheme.setAttribute('data-ag-theme', 'quartz');
+        styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${themeName}.css`;
+        styleTheme.setAttribute('data-ag-theme', themeName);
         document.head.appendChild(styleTheme);
       }
     }
@@ -267,6 +269,7 @@ export default {
             });
           }
         },
+        // Pass the active theme computed from themeParams/customTheme.
         theme: activeTheme.value
       };
       
@@ -340,7 +343,6 @@ export default {
         debouncedGridUpdate(() => gridApi.refreshCells({ force: true }));
       }
     };
-    
     const exportToCSV = () => {
       if (gridApi) {
         gridApi.exportDataAsCsv({
@@ -348,13 +350,11 @@ export default {
         });
       }
     };
-    
     const clearSelection = () => {
       if (gridApi) {
         debouncedGridUpdate(() => gridApi.deselectAll());
       }
     };
-    
     const retryUpdate = async () => {
       if (lastFailedUpdate.value) {
         if (lastFailedUpdate.value.retryCount > MAX_RETRY) {
