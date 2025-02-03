@@ -42,19 +42,27 @@ export default {
     const lastFailedUpdate = ref(null);
 
     // Use WeWeb helper variable for component state.
-    const { value: gridState, setValue: setGridState } = wwLib.wwVariable.useComponentVariable({
-      uid: props.uid,
-      name: 'gridState',
-      defaultValue: {
-        lastUpdate: null,
-        errorMessage: null,
-        isLoading: false,
-        scriptLoaded: false,
-        cssLoaded: false,
-        filterModel: null,
-        sortModel: null
-      }
-    });
+    let gridState;
+    let setGridState;
+    const defaultGridState = {
+      lastUpdate: null,
+      errorMessage: null,
+      isLoading: false,
+      scriptLoaded: false,
+      cssLoaded: false,
+      filterModel: null,
+      sortModel: null
+    };
+    if (typeof wwLib !== 'undefined' && wwLib.wwVariable && typeof wwLib.wwVariable.useComponentVariable === 'function') {
+      ({ value: gridState, setValue: setGridState } = wwLib.wwVariable.useComponentVariable({
+        uid: props.uid,
+        name: 'gridState',
+        defaultValue: defaultGridState
+      }));
+    } else {
+      gridState = ref(defaultGridState);
+      setGridState = (val) => { gridState.value = val; };
+    }
     
     // Compute legacy theme class based on "theme" property.
     const gridThemeClass = computed(() => `ag-theme-${props.content?.theme || 'quartz'}`);
@@ -238,7 +246,7 @@ export default {
           minWidth: 150,
           autoHeight: true,
           wrapText: true,
-          suppressKeyboardEvent: params => gridState.value.isLoading,
+          suppressKeyboardEvent: params => gridState.isLoading,
           filterParams: {
             debounceMs: 200,
             suppressAndOrCondition: true,
@@ -256,8 +264,8 @@ export default {
         onGridReady: (params) => {
           gridApi = params.api;
           gridColumnApi = params.columnApi;
-          if (gridState.value.filterModel) gridApi.setFilterModel(gridState.value.filterModel);
-          if (gridState.value.sortModel) gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
+          if (gridState.filterModel) gridApi.setFilterModel(gridState.filterModel);
+          if (gridState.sortModel) gridColumnApi.applyColumnState({ state: gridState.sortModel });
           // Auto-size columns if enabled.
           if (props.content.autoSizeColumns) {
             params.api.sizeColumnsToFit();
@@ -306,7 +314,7 @@ export default {
     }
     
     const handleCellValueChanged = async (event) => {
-      if (!props.content?.xanoEndpoint || isUpdating || gridState.value.isLoading) return;
+      if (!props.content?.xanoEndpoint || isUpdating || gridState.isLoading) return;
       const updatedData = { ...event.data };
       const originalValue = event.oldValue;
       const field = event.column.colId;
