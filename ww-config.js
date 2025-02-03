@@ -42,16 +42,8 @@ export default {
           },
           options: {
             item: {
-              field: {
-                label: 'Field',
-                type: 'Text',
-                options: { placeholder: 'Data field name' }
-              },
-              headerName: {
-                label: 'Header',
-                type: 'Text',
-                options: { placeholder: 'Column header name' }
-              },
+              field: { label: 'Field', type: 'Text', options: { placeholder: 'Data field name' } },
+              headerName: { label: 'Header', type: 'Text', options: { placeholder: 'Column header name' } },
               editable: { label: 'Editable', type: 'Boolean' },
               width: { label: 'Width', type: 'Number', options: { min: 50, max: 500 } },
               sortable: { label: 'Sortable', type: 'Boolean' },
@@ -206,7 +198,7 @@ export default {
         tooltip: 'Customize the loading message shown during updates'
       }
     },
-    // Theme override properties
+    // Theme override properties:
     accentColor: {
       label: { en: 'Accent Color' },
       type: 'Color',
