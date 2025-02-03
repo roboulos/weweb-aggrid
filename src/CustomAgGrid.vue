@@ -60,8 +60,13 @@ export default {
         defaultValue: defaultGridState
       }));
     } else {
-      gridState = reactive(defaultGridState);
-      setGridState = (val) => { Object.assign(gridState, val); };
+      if (props.wwEditorState) {
+        gridState = ref(defaultGridState);
+        setGridState = (val) => { gridState.value = val; };
+      } else {
+        gridState = reactive(defaultGridState);
+        setGridState = (val) => { Object.assign(gridState, val); };
+      }
     }
     
     // Compute legacy theme class based on "theme" property.
