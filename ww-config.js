@@ -25,6 +25,7 @@ export default {
     icon: 'table'
   },
   properties: {
+    // Data properties
     tableData: {
       label: { en: 'Table Data' },
       type: 'Array',
@@ -70,13 +71,15 @@ export default {
                 label: 'Data Type',
                 type: 'TextSelect',
                 defaultValue: 'text',
-                options: { options: [
-                  { value: 'text', label: 'Text' },
-                  { value: 'timestamp', label: 'Timestamp' },
-                  { value: 'boolean', label: 'Boolean' },
-                  { value: 'checkbox', label: 'Checkbox' },
-                  { value: 'dropdown', label: 'Dropdown' }
-                ] }
+                options: {
+                  options: [
+                    { value: 'text', label: 'Text' },
+                    { value: 'timestamp', label: 'Timestamp' },
+                    { value: 'boolean', label: 'Boolean' },
+                    { value: 'checkbox', label: 'Checkbox' },
+                    { value: 'dropdown', label: 'Dropdown' }
+                  ]
+                }
               },
               dropdownOptions: {
                 label: 'Dropdown Options',
@@ -122,6 +125,7 @@ export default {
       },
       propertyHelp: { tooltip: 'Additional headers for Xano API calls (e.g., authorization)' }
     },
+    // Display settings
     fontFamily: {
       label: { en: 'Grid Font Family' },
       type: 'Text',
@@ -196,7 +200,15 @@ export default {
       },
       propertyHelp: { tooltip: 'Customize the loading message shown during updates' }
     },
-    // Theme override properties – these will be used to build a custom theme via the theming API.
+    // NEW: Auto Size Columns flag: if true, auto-size columns on grid ready.
+    autoSizeColumns: {
+      label: { en: 'Auto Size Columns' },
+      type: 'OnOff',
+      section: 'settings',
+      bindable: true,
+      defaultValue: false
+    },
+    // Theme override properties (for CSS-based overrides)
     accentColor: {
       label: { en: 'Accent Color' },
       type: 'Color',
@@ -232,6 +244,14 @@ export default {
       bindable: true,
       defaultValue: '#E0E0E0'
     },
+    // NEW: Selected row background color override.
+    selectedRowBackgroundColor: {
+      label: { en: 'Selected Row Background Color' },
+      type: 'Color',
+      section: 'theme',
+      bindable: true,
+      defaultValue: ''
+    },
     // Legacy theme selector fallback
     theme: {
       label: { en: 'Grid Theme' },
@@ -252,7 +272,7 @@ export default {
       },
       propertyHelp: { tooltip: 'Select the visual style for the grid if not using custom theme parameters' }
     },
-    // Allow a full custom theme object (if provided) to override everything else.
+    // Allow full custom theme object from the user (if desired)
     customTheme: {
       label: { en: 'Custom Theme' },
       type: 'Object',
@@ -265,7 +285,7 @@ export default {
       },
       propertyHelp: { tooltip: 'Import a theme object such as one generated from the AG Grid Theme Builder' }
     },
-    // Alternatively, allow overriding theme parameters individually.
+    // Allow overriding individual theme parameters.
     themeParams: {
       label: { en: 'Theme Parameters' },
       type: 'Object',
@@ -329,3 +349,4 @@ export default {
     }
   ]
 };
+

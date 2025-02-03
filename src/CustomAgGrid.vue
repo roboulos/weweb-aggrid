@@ -55,7 +55,7 @@ export default {
       }
     });
     
-    // Compute legacy theme class from the "theme" property.
+    // Compute legacy theme class based on "theme" property.
     const gridThemeClass = computed(() => `ag-theme-${props.content?.theme || 'quartz'}`);
     
     // Compute inline style overrides from theme properties.
@@ -74,27 +74,38 @@ export default {
     // Inject dynamic CSS overrides via a <style> element.
     function applyThemeOverrides() {
       const css = `
+        /* Grid background override */
         .${gridThemeClass.value} .ag-root-wrapper {
           background-color: ${props.content.backgroundColor || '#FFFFFF'} !important;
         }
+        /* Header background override */
         .${gridThemeClass.value} .ag-header {
           background-color: ${props.content.headerBackgroundColor || '#F5F5F5'} !important;
         }
+        /* Header text override */
         .${gridThemeClass.value} .ag-header-cell,
         .${gridThemeClass.value} .ag-header-cell-label {
           color: ${props.content.headerTextColor || '#000000'} !important;
         }
+        /* Border override */
         .${gridThemeClass.value} .ag-cell,
         .${gridThemeClass.value} .ag-row,
         .${gridThemeClass.value} .ag-header-cell,
         .${gridThemeClass.value} .ag-root-wrapper {
           border-color: ${props.content.borderColor || '#E0E0E0'} !important;
         }
+        /* Accent color override */
         .${gridThemeClass.value} .ag-icon,
         .${gridThemeClass.value} .ag-action-icon,
         .${gridThemeClass.value} .ag-accent {
           color: ${props.content.accentColor || '#2196F3'} !important;
         }
+        /* Selected row background override */
+        ${props.content.selectedRowBackgroundColor ? `
+          .${gridThemeClass.value} .ag-row-selected {
+            background-color: ${props.content.selectedRowBackgroundColor} !important;
+          }
+        ` : ''}
       `;
       let styleEl = document.getElementById('custom-theme-overrides');
       if (!styleEl) {
@@ -105,13 +116,14 @@ export default {
       styleEl.innerHTML = css;
     }
     
-    // Watch theme-related properties and reapply overrides immediately.
+    // Watch for changes in theme properties and reapply overrides.
     watch(() => [
       props.content.accentColor,
       props.content.backgroundColor,
       props.content.headerBackgroundColor,
       props.content.headerTextColor,
-      props.content.borderColor
+      props.content.borderColor,
+      props.content.selectedRowBackgroundColor
     ], applyThemeOverrides, { immediate: true });
     
     // Compute active theme using AG Grid theming API.
@@ -125,7 +137,7 @@ export default {
       return themeQuartz;
     });
     
-    // Process column definitions to add custom formatting based on dataType.
+    // Process column definitions for custom formatting.
     const processedColumnDefs = computed(() => {
       const cols = props.content?.columnDefs || [];
       return cols.map(colDef => {
@@ -150,13 +162,13 @@ export default {
             }
             break;
           default:
-          // Default text: no extra formatting.
+          // Default text formatting: nothing extra.
         }
         return newColDef;
       });
     });
     
-    // Debounced update to preserve filter and sort state.
+    // Debounced update to preserve grid state.
     const debouncedGridUpdate = debounce((operation, showLoadingOverlay = false) => {
       if (!gridApi) return;
       if (showLoadingOverlay) setGridState({ ...gridState.value, isLoading: true });
@@ -177,7 +189,7 @@ export default {
       }, 100);
     }, 150);
     
-    // Load AG Grid resources. If custom theme parameters are provided, skip loading legacy theme CSS.
+    // Load AG Grid resources.
     function loadAgGridResources() {
       console.log('Loading AG Grid resources');
       if (!window.__agGridResourcesLoaded) {
@@ -194,9 +206,7 @@ export default {
       if (!(props.content.themeParams && Object.keys(props.content.themeParams).length > 0) && !props.customTheme) {
         const themeName = props.content?.theme || 'quartz';
         const existingThemeLink = document.querySelector('link[data-ag-theme]');
-        if (existingThemeLink) {
-          existingThemeLink.parentNode.removeChild(existingThemeLink);
-        }
+        if (existingThemeLink) existingThemeLink.parentNode.removeChild(existingThemeLink);
         const styleTheme = document.createElement('link');
         styleTheme.rel = 'stylesheet';
         styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${themeName}.css`;
@@ -247,7 +257,10 @@ export default {
           gridColumnApi = params.columnApi;
           if (gridState.value.filterModel) gridApi.setFilterModel(gridState.value.filterModel);
           if (gridState.value.sortModel) gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
-          params.api.sizeColumnsToFit();
+          // Auto-size columns if enabled.
+          if (props.content.autoSizeColumns) {
+            params.api.sizeColumnsToFit();
+          }
         },
         onFilterChanged: () => {
           if (!gridApi) return;
@@ -269,7 +282,6 @@ export default {
             });
           }
         },
-        // Pass the active theme computed from themeParams/customTheme.
         theme: activeTheme.value
       };
       
