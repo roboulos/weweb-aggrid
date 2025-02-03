@@ -1,5 +1,6 @@
 <template>
-  <div class="ag-grid-wrapper" :style="[ { fontFamily: content.fontFamily || 'Arial, sans-serif' }, gridCustomStyles ]">
+  <div class="ag-grid-wrapper" :style="{ fontFamily: content.fontFamily || 'Arial, sans-serif' }">
+    <!-- The container div gets our inline overrides via gridCustomStyles -->
     <div 
       ref="agGridElement"
       class="ag-grid-container"
@@ -40,7 +41,7 @@ export default {
     const MAX_RETRY = 3;
     const lastFailedUpdate = ref(null);
 
-    // Component state variable (using WeWeb helper)
+    // Use WeWeb helper variable for component state.
     const { value: gridState, setValue: setGridState } = wwLib.wwVariable.useComponentVariable({
       uid: props.uid,
       name: 'gridState',
@@ -55,26 +56,46 @@ export default {
       }
     });
     
-    // Compute a fallback legacy theme class from the "theme" property.
+    // Compute legacy theme class from the "theme" property.
     const gridThemeClass = computed(() => `ag-theme-${props.content?.theme || 'quartz'}`);
     
-    // Build a style object mapping theme properties to CSS custom properties.
-    const gridCustomStyles = computed(() => {
-      return {
-        '--ag-accent-color': props.content.accentColor || '#2196F3',
-        '--ag-background-color': props.content.backgroundColor || '#FFFFFF',
-        '--ag-header-background-color': props.content.headerBackgroundColor || '#F5F5F5',
-        '--ag-header-text-color': props.content.headerTextColor || '#000000',
-        '--ag-border-color': props.content.borderColor || '#E0E0E0',
-        '--ag-row-border-color': props.content.borderColor || '#E0E0E0',
-        width: '100%',
-        height: '100%',
-        'min-height': '400px'
-      };
-    });
+    // Create a dynamic style injection for custom theme overrides.
+    function applyThemeOverrides() {
+      const css = `
+        .${gridThemeClass.value} .ag-root-wrapper {
+          background-color: ${props.content.backgroundColor || '#FFFFFF'} !important;
+        }
+        .${gridThemeClass.value} .ag-header {
+          background-color: ${props.content.headerBackgroundColor || '#F5F5F5'} !important;
+        }
+        .${gridThemeClass.value} .ag-header-cell {
+          color: ${props.content.headerTextColor || '#000000'} !important;
+        }
+        .${gridThemeClass.value} .ag-border, 
+        .${gridThemeClass.value} .ag-row {
+          border-color: ${props.content.borderColor || '#E0E0E0'} !important;
+        }
+        .${gridThemeClass.value} .ag-accent {
+          color: ${props.content.accentColor || '#2196F3'} !important;
+        }
+      `;
+      let styleEl = document.getElementById('custom-theme-overrides');
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'custom-theme-overrides';
+        document.head.appendChild(styleEl);
+      }
+      styleEl.innerHTML = css;
+    }
     
-    // Compute the active theme. If a full customTheme object is provided and supports withParams,
-    // use it; otherwise, if themeParams are provided in content, merge them with themeQuartz.
+    // Watch for changes in theme-related properties and reapply overrides.
+    watch(
+      () => [props.content.accentColor, props.content.backgroundColor, props.content.headerBackgroundColor, props.content.headerTextColor, props.content.borderColor],
+      () => applyThemeOverrides()
+    );
+    
+    // Compute the active theme: if a full customTheme is provided and supports withParams, use it;
+    // else if themeParams exist, merge them with themeQuartz; otherwise, use themeQuartz.
     const activeTheme = computed(() => {
       if (props.customTheme && typeof props.customTheme.withParams === 'function') {
         return props.customTheme;
@@ -85,7 +106,7 @@ export default {
       return themeQuartz;
     });
     
-    // Process column definitions to add custom formatting based on dataType.
+    // Process column definitions to add custom formatting.
     const processedColumnDefs = computed(() => {
       const cols = props.content?.columnDefs || [];
       return cols.map(colDef => {
@@ -110,13 +131,13 @@ export default {
             }
             break;
           default:
-          // No extra formatting for text.
+          // Default text, no extra formatting.
         }
         return newColDef;
       });
     });
     
-    // Debounced grid update to preserve filter and sort state.
+    // Debounced update function to preserve filter and sort state.
     const debouncedGridUpdate = debounce((operation, showLoadingOverlay = false) => {
       if (!gridApi) return;
       if (showLoadingOverlay) {
@@ -126,12 +147,8 @@ export default {
       const currentSortModel = gridColumnApi.getColumnState();
       operation();
       setTimeout(() => {
-        if (gridApi && currentFilterModel) {
-          gridApi.setFilterModel(currentFilterModel);
-        }
-        if (gridColumnApi && currentSortModel) {
-          gridColumnApi.applyColumnState({ state: currentSortModel });
-        }
+        if (gridApi && currentFilterModel) gridApi.setFilterModel(currentFilterModel);
+        if (gridColumnApi && currentSortModel) gridColumnApi.applyColumnState({ state: currentSortModel });
         if (showLoadingOverlay) {
           setGridState({
             ...gridState.value,
@@ -151,16 +168,14 @@ export default {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js';
         document.body.appendChild(script);
-        
         const styleGrid = document.createElement('link');
         styleGrid.rel = 'stylesheet';
         styleGrid.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css';
         document.head.appendChild(styleGrid);
-        
-        // Load a legacy theme CSS for fallback if no theme parameters are set.
+        // For legacy themes, load the preset theme CSS.
         const styleTheme = document.createElement('link');
         styleTheme.rel = 'stylesheet';
-        styleTheme.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-quartz.css';
+        styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-quartz.css`;
         styleTheme.setAttribute('data-ag-theme', 'quartz');
         document.head.appendChild(styleTheme);
       }
@@ -206,13 +221,8 @@ export default {
         onGridReady: (params) => {
           gridApi = params.api;
           gridColumnApi = params.columnApi;
-          if (gridState.value.filterModel) {
-            gridApi.setFilterModel(gridState.value.filterModel);
-          }
-          if (gridState.value.sortModel) {
-            gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
-          }
-          // Auto-size columns to fit grid width.
+          if (gridState.value.filterModel) gridApi.setFilterModel(gridState.value.filterModel);
+          if (gridState.value.sortModel) gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
           params.api.sizeColumnsToFit();
         },
         onFilterChanged: () => {
@@ -258,7 +268,7 @@ export default {
       }
     }
     
-    // Function to handle cell value changes and update backend via Xano.
+    // Function to handle cell value changes with backend update via Xano.
     const handleCellValueChanged = async (event) => {
       if (!props.content?.xanoEndpoint || isUpdating || gridState.value.isLoading) return;
       const updatedData = { ...event.data };
@@ -293,7 +303,7 @@ export default {
       }
     };
     
-    // Watchers to update grid if tableData or pageSize change externally.
+    // Watchers to update grid on external changes.
     watch(() => props.content?.tableData, (newData) => {
       if (gridApi && newData && !isUpdating) {
         debouncedGridUpdate(() => gridApi.setRowData(newData));
@@ -311,7 +321,6 @@ export default {
         debouncedGridUpdate(() => gridApi.refreshCells({ force: true }));
       }
     };
-    
     const exportToCSV = () => {
       if (gridApi) {
         gridApi.exportDataAsCsv({
@@ -319,13 +328,11 @@ export default {
         });
       }
     };
-    
     const clearSelection = () => {
       if (gridApi) {
         debouncedGridUpdate(() => gridApi.deselectAll());
       }
     };
-    
     const retryUpdate = async () => {
       if (lastFailedUpdate.value) {
         if (lastFailedUpdate.value.retryCount > MAX_RETRY) {
@@ -341,6 +348,7 @@ export default {
     onMounted(() => {
       console.log('Vue component mounted');
       loadAgGridResources();
+      applyThemeOverrides();
       const checkInterval = setInterval(() => {
         if (window.agGrid) {
           clearInterval(checkInterval);
@@ -353,9 +361,13 @@ export default {
     
     onBeforeUnmount(() => {
       if (gridApi) gridApi.destroy();
-      const themeLink = document.querySelector('link[data-ag-theme]');
+      const themeLink = document.getElementById('custom-theme-overrides');
       if (themeLink && themeLink.parentNode) {
         themeLink.parentNode.removeChild(themeLink);
+      }
+      const legacyThemeLink = document.querySelector('link[data-ag-theme]');
+      if (legacyThemeLink && legacyThemeLink.parentNode) {
+        legacyThemeLink.parentNode.removeChild(legacyThemeLink);
       }
     });
     
