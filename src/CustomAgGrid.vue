@@ -4,6 +4,7 @@
       ref="agGridElement"
       class="ag-grid-container"
       :class="[gridThemeClass, { 'is-loading': gridState.isLoading }]"
+      :style="gridCustomStyles"
     >
       <transition name="fade">
         <div v-if="gridState.isLoading" class="loading-overlay">
