@@ -53,20 +53,15 @@ export default {
       filterModel: null,
       sortModel: null
     };
-    if (typeof wwLib !== 'undefined' && wwLib.wwVariable && typeof wwLib.wwVariable.useComponentVariable === 'function') {
+    if (typeof wwLib !== 'undefined') {
       ({ value: gridState, setValue: setGridState } = wwLib.wwVariable.useComponentVariable({
         uid: props.uid,
         name: 'gridState',
         defaultValue: defaultGridState
       }));
     } else {
-      if (props.wwEditorState) {
-        gridState = ref(defaultGridState);
-        setGridState = (val) => { gridState.value = val; };
-      } else {
-        gridState = reactive(defaultGridState);
-        setGridState = (val) => { Object.assign(gridState, val); };
-      }
+      gridState = ref(defaultGridState);
+      setGridState = (val) => { gridState.value = val; };
     }
     
     // Compute legacy theme class based on "theme" property.
