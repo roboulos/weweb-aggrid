@@ -4,7 +4,7 @@
         ref="agGridElement"
         class="ag-grid-container"
         :class="[gridThemeClass, { 'is-loading': gridState.isLoading }]"
-        :style="gridCustomStyles"
+        :style="[gridCustomStyles, { height: '100%', width: '100%' }]"
       >
         <transition name="fade">
           <div v-if="gridState.isLoading" class="loading-overlay">
@@ -20,8 +20,10 @@
   <script>
   import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
   import { debounce } from 'lodash';
+  import 'ag-grid-community/styles/ag-grid.css';
+  import 'ag-grid-community/styles/ag-theme-quartz.css';
+  import { Grid, themeQuartz } from 'ag-grid-community';
   // Import the default AG Grid theme (Quartz) for use in theme composition
-  import { themeQuartz } from 'ag-grid-community';
   
   export default {
     props: {
@@ -147,37 +149,12 @@
       // Load AG Grid resources (scripts and CSS)
       function loadAgGridResources() {
         console.log('Loading AG Grid resources');
-        if (!window.__agGridResourcesLoaded) {
-          window.__agGridResourcesLoaded = true;
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js';
-          document.body.appendChild(script);
-          const styleGrid = document.createElement('link');
-          styleGrid.rel = 'stylesheet';
-          styleGrid.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css';
-          document.head.appendChild(styleGrid);
-        }
-        // If no custom theme object is provided, load fallback CSS based on the legacy theme name.
-        if (!props.customTheme) {
-          const themeName = props.content?.theme || 'quartz';
-          const existingThemeLink = document.querySelector('link[data-ag-theme]');
-          if (existingThemeLink) {
-            existingThemeLink.parentNode.removeChild(existingThemeLink);
-          }
-          const styleTheme = document.createElement('link');
-          styleTheme.rel = 'stylesheet';
-          styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${themeName}.css`;
-          styleTheme.setAttribute('data-ag-theme', themeName);
-          document.head.appendChild(styleTheme);
-        }
+        // No need to load resources dynamically since we're importing them
+        setGridState({ ...gridState.value, scriptLoaded: true, cssLoaded: true });
       }
   
       // Initialize AG Grid with the active theme passed via gridOptions
       function initializeAgGrid() {
-        if (!window.agGrid) {
-          console.warn('AG Grid not loaded yet, retrying...');
-          return;
-        }
         const gridDiv = agGridElement.value;
         if (!gridDiv) {
           console.warn('Grid element not found');
@@ -218,6 +195,8 @@
             if (gridState.value.sortModel) {
               gridColumnApi.applyColumnState({ state: gridState.value.sortModel });
             }
+            // Auto-size columns after grid is ready
+            params.api.sizeColumnsToFit();
           },
           onFilterChanged: () => {
             if (!gridApi) return;
@@ -239,18 +218,12 @@
               });
             }
           },
-          // Pass the active theme object as the grid theme option (if using the AG Grid Theming API)
+          // Pass the active theme object as the grid theme option
           theme: activeTheme.value
         };
   
         try {
-          if (typeof window.agGrid.createGrid === 'function') {
-            window.agGrid.createGrid(gridDiv, gridOptions);
-          } else if (typeof window.agGrid.Grid === 'function') {
-            new window.agGrid.Grid(gridDiv, gridOptions);
-          } else {
-            throw new Error('AG Grid initialization method not found');
-          }
+          new Grid(gridDiv, gridOptions);
           console.log('Grid initialized successfully');
         } catch (error) {
           console.error('Failed to initialize grid:', error);
@@ -399,13 +372,15 @@
     height: 100%;
     min-height: 400px;
     position: relative;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
+  
   .ag-grid-container {
+    flex: 1;
     width: 100%;
-    height: 100%;
+    min-height: 400px;
     position: relative;
-    overflow: auto;
     &.is-loading {
       pointer-events: none;
       opacity: 0.7;
@@ -437,4 +412,3 @@
     opacity: 0;
   }
   </style>
-  
