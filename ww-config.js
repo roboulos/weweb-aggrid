@@ -15,9 +15,7 @@ export default {
         type: 'Array',
         tooltip: 'Bind to an array of objects to display in the grid'
       },
-      propertyHelp: {
-        tooltip: 'The data to display in the grid'
-      }
+      propertyHelp: { tooltip: 'The data to display in the grid' }
     },
     columnDefs: {
       label: { en: 'Column Definitions' },
@@ -80,9 +78,7 @@ export default {
         type: 'Array',
         tooltip: 'Array of column definitions for the grid'
       },
-      propertyHelp: {
-        tooltip: 'Define the columns to display in the grid'
-      }
+      propertyHelp: { tooltip: 'Define the columns to display in the grid' }
     },
     xanoEndpoint: {
       label: { en: 'Xano Update Endpoint' },
@@ -94,9 +90,7 @@ export default {
         type: 'string',
         tooltip: 'The Xano API endpoint URL for updating records'
       },
-      propertyHelp: {
-        tooltip: 'Enter the full URL of your Xano update endpoint'
-      }
+      propertyHelp: { tooltip: 'Enter the full URL of your Xano update endpoint' }
     },
     xanoHeaders: {
       label: { en: 'Xano Headers' },
@@ -108,9 +102,7 @@ export default {
         type: 'object',
         tooltip: 'Custom headers to send with Xano requests'
       },
-      propertyHelp: {
-        tooltip: 'Additional headers for Xano API calls (e.g., authorization)'
-      }
+      propertyHelp: { tooltip: 'Additional headers for Xano API calls (e.g., authorization)' }
     },
     fontFamily: {
       label: { en: 'Grid Font Family' },
@@ -122,9 +114,7 @@ export default {
         type: 'string',
         tooltip: 'Set the font family for the grid'
       },
-      propertyHelp: {
-        tooltip: 'Customize the font used in the grid'
-      }
+      propertyHelp: { tooltip: 'Customize the font used in the grid' }
     },
     rowHeight: {
       label: { en: 'Row Height' },
@@ -137,9 +127,7 @@ export default {
         type: 'number',
         tooltip: 'Row height in pixels'
       },
-      propertyHelp: {
-        tooltip: 'Set the height for each row in the grid'
-      }
+      propertyHelp: { tooltip: 'Set the height for each row in the grid' }
     },
     pageSize: {
       label: { en: 'Page Size' },
@@ -152,9 +140,7 @@ export default {
         type: 'number',
         tooltip: 'Number of rows to display per page'
       },
-      propertyHelp: {
-        tooltip: 'Set how many rows to show on each page'
-      }
+      propertyHelp: { tooltip: 'Set how many rows to show on each page' }
     },
     enableFiltering: {
       label: { en: 'Enable Filtering' },
@@ -166,9 +152,7 @@ export default {
         type: 'boolean',
         tooltip: 'Enable or disable column filtering'
       },
-      propertyHelp: {
-        tooltip: 'Allow users to filter data in columns'
-      }
+      propertyHelp: { tooltip: 'Allow users to filter data in columns' }
     },
     enableSorting: {
       label: { en: 'Enable Sorting' },
@@ -180,9 +164,7 @@ export default {
         type: 'boolean',
         tooltip: 'Enable or disable column sorting'
       },
-      propertyHelp: {
-        tooltip: 'Allow users to sort data in columns'
-      }
+      propertyHelp: { tooltip: 'Allow users to sort data in columns' }
     },
     loadingMessage: {
       label: { en: 'Loading Message' },
@@ -194,11 +176,9 @@ export default {
         type: 'string',
         tooltip: 'Message to display during updates'
       },
-      propertyHelp: {
-        tooltip: 'Customize the loading message shown during updates'
-      }
+      propertyHelp: { tooltip: 'Customize the loading message shown during updates' }
     },
-    // Theme override properties:
+    // Theme override properties
     accentColor: {
       label: { en: 'Accent Color' },
       type: 'Color',
@@ -269,6 +249,21 @@ export default {
       },
       propertyHelp: {
         tooltip: 'Import a theme object such as one generated from the AG Grid Theme Builder'
+      }
+    },
+    // Allow overriding individual theme parameters (optional alternative)
+    themeParams: {
+      label: { en: 'Theme Parameters' },
+      type: 'Object',
+      section: 'style',
+      bindable: true,
+      defaultValue: {},
+      bindingValidation: {
+        type: 'object',
+        tooltip: 'Theme parameter overrides for AG Grid (e.g., accentColor, headerTextColor)'
+      },
+      propertyHelp: {
+        tooltip: 'Provide custom theme parameters to merge with the default theme'
       }
     }
   },
