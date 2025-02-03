@@ -60,8 +60,8 @@ export default {
         defaultValue: defaultGridState
       }));
     } else {
-      gridState = ref(defaultGridState);
-      setGridState = (val) => { gridState.value = val; };
+      gridState = reactive(defaultGridState);
+      setGridState = (val) => { Object.assign(gridState, val); };
     }
     
     // Compute legacy theme class based on "theme" property.
@@ -180,7 +180,7 @@ export default {
     // Debounced update to preserve grid state.
     const debouncedGridUpdate = debounce((operation, showLoadingOverlay = false) => {
       if (!gridApi) return;
-      if (showLoadingOverlay) setGridState({ ...gridState.value, isLoading: true });
+      if (showLoadingOverlay) setGridState({ ...gridState, isLoading: true });
       const currentFilterModel = gridApi.getFilterModel();
       const currentSortModel = gridColumnApi.getColumnState();
       operation();
@@ -189,7 +189,7 @@ export default {
         if (gridColumnApi && currentSortModel) gridColumnApi.applyColumnState({ state: currentSortModel });
         if (showLoadingOverlay) {
           setGridState({
-            ...gridState.value,
+            ...gridState,
             isLoading: false,
             filterModel: currentFilterModel,
             sortModel: currentSortModel
@@ -275,12 +275,12 @@ export default {
           if (!gridApi) return;
           const newFilterModel = gridApi.getFilterModel();
           gridApi.redrawRows();
-          setGridState({ ...gridState.value, filterModel: newFilterModel });
+          setGridState({ ...gridState, filterModel: newFilterModel });
         },
         onSortChanged: () => {
           if (!gridColumnApi) return;
           const newSortModel = gridColumnApi.getColumnState();
-          setGridState({ ...gridState.value, sortModel: newSortModel });
+          setGridState({ ...gridState, sortModel: newSortModel });
         },
         onCellValueChanged: handleCellValueChanged,
         onRowSelected: (event) => {
@@ -305,7 +305,7 @@ export default {
         console.log('Grid initialized successfully');
       } catch (error) {
         console.error('Failed to initialize grid:', error);
-        setGridState({ ...gridState.value, errorMessage: 'Failed to initialize grid' });
+        setGridState({ ...gridState, errorMessage: 'Failed to initialize grid' });
         emit('trigger-event', {
           name: 'error',
           event: { message: 'Failed to initialize grid', type: 'error' }
@@ -320,7 +320,7 @@ export default {
       const field = event.column.colId;
       isUpdating = true;
       try {
-        setGridState({ ...gridState.value, isLoading: true });
+        setGridState({ ...gridState, isLoading: true });
         emit('trigger-event', { name: 'updateStart', event: { rowData: updatedData } });
         const headers = {
           'Content-Type': 'application/json',
@@ -337,10 +337,10 @@ export default {
           name: 'cellValueChanged',
           event: { field, oldValue: originalValue, newValue: event.newValue, rowData: result }
         });
-        setGridState({ ...gridState.value, lastUpdate: new Date(), isLoading: false });
+        setGridState({ ...gridState, lastUpdate: new Date(), isLoading: false });
       } catch (error) {
         event.node.setDataValue(field, originalValue);
-        setGridState({ ...gridState.value, errorMessage: error.message || 'Update failed', isLoading: false });
+        setGridState({ ...gridState, errorMessage: error.message || 'Update failed', isLoading: false });
         emit('trigger-event', { name: 'error', event: { message: error.message || 'Update failed', type: 'error' } });
       } finally {
         isUpdating = false;
@@ -395,7 +395,7 @@ export default {
       const checkInterval = setInterval(() => {
         if (window.agGrid) {
           clearInterval(checkInterval);
-          setGridState({ ...gridState.value, scriptLoaded: true });
+          setGridState({ ...gridState, scriptLoaded: true });
           initializeAgGrid();
         }
       }, 100);
