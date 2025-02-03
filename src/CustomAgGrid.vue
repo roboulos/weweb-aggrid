@@ -4,6 +4,7 @@
         ref="agGridElement"
         class="ag-grid-container"
         :class="[gridThemeClass, { 'is-loading': gridState.isLoading }]"
+        :style="gridCustomStyles"
       >
         <transition name="fade">
           <div v-if="gridState.isLoading" class="loading-overlay">
@@ -57,20 +58,28 @@
         }
       });
   
-      // Compose the active theme:
-      // If a customTheme prop is provided (and supports the theming API), use it.
-      // Otherwise, if themeParams are provided in content, merge them with the default themeQuartz.
-      // Else fall back to themeQuartz.
-      const activeTheme = computed(() => {
-        if (props.customTheme && typeof props.customTheme.withParams === 'function') {
-          return props.customTheme;
+      // Compute custom grid styles based on theme parameters
+      const gridCustomStyles = computed(() => ({
+        '--ag-accent-color': props.content.accentColor || '#2196F3',
+        '--ag-background-color': props.content.backgroundColor || '#FFFFFF',
+        '--ag-header-background-color': props.content.headerBackgroundColor || '#F5F5F5',
+        '--ag-header-foreground-color': props.content.headerTextColor || '#000000',
+        '--ag-border-color': props.content.borderColor || '#E0E0E0',
+        '--ag-row-border-color': props.content.borderColor || '#E0E0E0',
+      }));
+
+      // Compute active theme by merging with themeQuartz
+      const activeTheme = computed(() => ({
+        ...themeQuartz,
+        vars: {
+          ...themeQuartz.vars,
+          backgroundColor: props.content.backgroundColor || '#FFFFFF',
+          headerBackgroundColor: props.content.headerBackgroundColor || '#F5F5F5',
+          headerForegroundColor: props.content.headerTextColor || '#000000',
+          borderColor: props.content.borderColor || '#E0E0E0',
         }
-        if (props.content && props.content.themeParams && Object.keys(props.content.themeParams).length > 0) {
-          return themeQuartz.withParams(props.content.themeParams);
-        }
-        return themeQuartz;
-      });
-  
+      }));
+
       // Legacy class for fallback CSS themes
       const gridThemeClass = computed(() => {
         return props.content?.themeClass || `ag-theme-${props.content?.theme || 'quartz'}`;

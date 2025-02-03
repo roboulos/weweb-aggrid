@@ -1,4 +1,5 @@
 export default {
+    name: "AG Grid Component",
     editor: {
       label: {
         en: 'AG Grid Xano',
@@ -6,6 +7,41 @@ export default {
       icon: 'table',
     },
     properties: {
+      accentColor: {
+        label: { en: 'Accent Color' },
+        type: 'Color',
+        section: 'theme',
+        bindable: true,
+        defaultValue: '#2196F3'
+      },
+      backgroundColor: {
+        label: { en: 'Background Color' },
+        type: 'Color',
+        section: 'theme',
+        bindable: true,
+        defaultValue: '#FFFFFF'
+      },
+      headerBackgroundColor: {
+        label: { en: 'Header Background' },
+        type: 'Color',
+        section: 'theme',
+        bindable: true,
+        defaultValue: '#F5F5F5'
+      },
+      headerTextColor: {
+        label: { en: 'Header Text' },
+        type: 'Color',
+        section: 'theme',
+        bindable: true,
+        defaultValue: '#000000'
+      },
+      borderColor: {
+        label: { en: 'Border Color' },
+        type: 'Color',
+        section: 'theme',
+        bindable: true,
+        defaultValue: '#E0E0E0'
+      },
       tableData: {
         label: { en: 'Table Data' },
         type: 'Array',
@@ -374,4 +410,3 @@ export default {
       }
     ]
   };
-  
