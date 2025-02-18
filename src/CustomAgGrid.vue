@@ -124,6 +124,48 @@
     return columnDefs.map(col => {
       const column = { ...col };
 
+      // Add checkbox column if specified
+      if (column.field === '_checkbox' || column.checkboxSelection) {
+        column.headerName = '';
+        column.width = column.width || 50;
+        column.editable = false;
+        column.sortable = false;
+        column.filter = false;
+        column.checkboxSelection = true;
+        column.headerCheckboxSelection = true;
+        column.pinned = 'left';
+      }
+
+      // Style numerical IDs
+      if (column.field === 'id' || column.isId) {
+        column.cellStyle = {
+          fontFamily: 'monospace',
+          color: '#666'
+        };
+      }
+
+      // Style clickable fields
+      if (column.isClickable) {
+        column.cellRenderer = params => {
+          const container = document.createElement('div');
+          container.style.whiteSpace = 'normal';
+          container.style.lineHeight = '1.5';
+          container.style.cursor = 'pointer';
+          
+          const text = params.value || '';
+          container.innerHTML = `<span style="color: #1a73e8; text-decoration: none; font-weight: 500;">${text}</span>`;
+          
+          container.addEventListener('mouseover', () => {
+            container.firstChild.style.textDecoration = 'underline';
+          });
+          container.addEventListener('mouseout', () => {
+            container.firstChild.style.textDecoration = 'none';
+          });
+          
+          return container;
+        };
+      }
+
       // Handle timestamp data type
       if (column.dataType === 'timestamp') {
         column.valueFormatter = params => {
@@ -136,16 +178,39 @@
             minute: '2-digit'
           });
         };
+        if (column.highlightPastDue) {
+          column.cellStyle = params => {
+            const now = new Date();
+            const date = new Date(params.value);
+            return {
+              color: date < now ? '#D93025' : 'inherit',
+              fontWeight: date < now ? '500' : 'normal'
+            };
+          };
+        }
       }
 
       // Handle boolean data type
       if (column.dataType === 'boolean') {
         column.cellRenderer = params => {
-          return `<div style="display: flex; align-items: center; height: 100%;">
-            <input type="checkbox" 
-              ${params.value ? 'checked' : ''} 
+          const checked = params.value ? 'checked' : '';
+          return `<div style="
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+          ">
+            <input 
+              type="checkbox" 
+              ${checked}
+              style="
+                width: 18px;
+                height: 18px;
+                border: 2px solid #1a73e8;
+                border-radius: 2px;
+                cursor: pointer;
+              "
               onclick="return false;"
-              style="margin: 0 5px;"
             />
           </div>`;
         };
@@ -156,6 +221,47 @@
         column.cellEditor = 'agSelectCellEditor';
         column.cellEditorParams = {
           values: column.dropdownOptions || []
+        };
+        
+        // Add status styling if it's a status field
+        if (column.field === 'status' || column.isStatus) {
+          column.cellRenderer = params => {
+            const styles = {
+              'Delivered': { bg: '#E6F4EA', color: '#1E8E3E', text: 'delivered' },
+              'Shipped': { bg: '#E8F0FE', color: '#1967D2', text: 'shipped' },
+              'Pending': { bg: '#FEF7E0', color: '#E37400', text: 'pending' },
+              'Cancelled': { bg: '#FCE8E6', color: '#D93025', text: 'Cancelled' }
+            };
+            const style = styles[params.value] || styles.Pending;
+            return `<div style="
+              background: ${style.bg};
+              color: ${style.color};
+              border-radius: 16px;
+              padding: 4px 12px;
+              font-size: 13px;
+              font-weight: 500;
+              display: inline-block;
+              text-transform: lowercase;
+              line-height: 16px;
+              letter-spacing: 0.2px;
+            ">${style.text}</div>`;
+          };
+        }
+      }
+
+      // Handle currency formatting
+      if (column.isCurrency) {
+        column.valueFormatter = params => {
+          if (!params.value) return '';
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2
+          }).format(params.value);
+        };
+        column.cellStyle = {
+          fontFamily: 'monospace',
+          fontWeight: '500'
         };
       }
 

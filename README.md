@@ -32,7 +32,69 @@ Actions:
 Variables:
 - `gridState`: Object - Contains grid loading and error states
 
-## Column Definition Examples
+## Quick Start Examples
+
+### Selection Column
+```javascript
+{
+  "field": "_checkbox"  // That's it! Full checkbox column with header selection
+}
+```
+
+### ID Column with Monospace Font
+```javascript
+{
+  "field": "id",
+  "headerName": "ID",
+  "width": 80,
+  "isId": true  // Adds monospace styling
+}
+```
+
+### Clickable Link Column
+```javascript
+{
+  "field": "product_name",
+  "headerName": "Product Name",
+  "width": 250,
+  "isClickable": true  // Adds blue color, hover effect, and pointer cursor
+}
+```
+
+### Status Column with Badges
+```javascript
+{
+  "field": "status",
+  "headerName": "Status",
+  "width": 120,
+  "dataType": "dropdown",
+  "dropdownOptions": ["Pending", "Shipped", "Delivered", "Cancelled"],
+  "isStatus": true  // Adds Material Design status badges
+}
+```
+
+### Date Column with Past Due Highlighting
+```javascript
+{
+  "field": "expected_delivery",
+  "headerName": "Expected Delivery",
+  "width": 150,
+  "dataType": "timestamp",
+  "highlightPastDue": true  // Highlights past dates in red
+}
+```
+
+### Currency Column
+```javascript
+{
+  "field": "price",
+  "headerName": "Price",
+  "width": 120,
+  "isCurrency": true  // Adds currency formatting and monospace font
+}
+```
+
+## Column Definition Features
 
 ### Basic Text Column
 ```javascript
