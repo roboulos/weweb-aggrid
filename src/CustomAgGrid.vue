@@ -139,15 +139,27 @@
       try {
         // Parse grid options
         if (props.content?.gridOptions) {
-          customGridOptions = Function('return ' + props.content.gridOptions)();
+          try {
+            customGridOptions = JSON.parse(props.content.gridOptions);
+          } catch (e) {
+            console.warn('Invalid grid options format:', e);
+          }
         }
         // Parse column definitions
         if (props.content?.columnDefsCode) {
-          customColumnDefs = Function('return ' + props.content.columnDefsCode)();
+          try {
+            customColumnDefs = JSON.parse(props.content.columnDefsCode);
+          } catch (e) {
+            console.warn('Invalid column definitions format:', e);
+          }
         }
         // Parse custom events
         if (props.content?.customEvents) {
-          customEvents = Function('return ' + props.content.customEvents)();
+          try {
+            customEvents = JSON.parse(props.content.customEvents);
+          } catch (e) {
+            console.warn('Invalid events format:', e);
+          }
         }
       } catch (parseError) {
         console.error('Error parsing custom code:', parseError);

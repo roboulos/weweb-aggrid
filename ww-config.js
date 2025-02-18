@@ -38,11 +38,9 @@ export default {
       type: 'Text',
       section: 'settings',
       defaultValue: '{
-  // Paste your AG Grid options here
-  // Example:
-  defaultColDef: {
-    sortable: true,
-    filter: true
+  "defaultColDef": {
+    "sortable": true,
+    "filter": true
   }
 }',
       options: {
@@ -57,11 +55,14 @@ export default {
       type: 'Text',
       section: 'settings',
       defaultValue: '[
-  // Paste your column definitions here
-  // Example:
   {
-    field: "name",
-    cellRenderer: params => `<img src="${params.value}" style="height: 30px;"/>`
+    "field": "name",
+    "headerName": "Name",
+    "width": 150,
+    "cellStyle": {
+      "color": "#2196F3",
+      "fontWeight": "bold"
+    }
   }
 ]',
       options: {
@@ -76,12 +77,9 @@ export default {
       type: 'Text',
       section: 'settings',
       defaultValue: '{
-  // Paste your event handlers here
-  // Example:
-  onCellClicked: params => {
-    // Your code here
-    console.log("Cell clicked:", params);
-  }
+  "onCellClicked": true,
+  "onRowSelected": true,
+  "onFilterChanged": true
 }',
       options: {
         type: 'code',

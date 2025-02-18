@@ -1,8 +1,6 @@
----
-name: weweb-ag-grid-component
-description: A customizable AG Grid component for WeWeb that integrates with Xano backend, supporting dynamic data binding, theme customization, and cell value updates
-keywords: [ag-grid, table, grid, xano, data-grid, weweb]
----
+# AG Grid Component for WeWeb
+
+A powerful and flexible AG Grid integration for WeWeb that supports both basic and advanced usage modes.
 
 #### AG Grid Component
 
@@ -34,9 +32,92 @@ Actions:
 Variables:
 - `gridState`: Object - Contains grid loading and error states
 
-Special features:
-- Dynamic theme customization through CSS variables
-- Automatic data updates on cell value changes
-- Error handling with automatic rollback
-- Loading state management
-- CSV export capability
+## Usage Modes
+
+### Basic Mode
+User-friendly configuration with simple options for common use cases.
+
+### Advanced Mode
+Full access to AG Grid features through code injection:
+
+1. **Custom Grid Options**
+```javascript
+{
+  // Enable row grouping
+  groupDefaultExpanded: 1,
+  autoGroupColumnDef: {
+    headerName: 'Group',
+    minWidth: 200
+  },
+  // Enable footer aggregation
+  groupIncludeFooter: true
+}
+```
+
+2. **Advanced Column Definitions**
+```javascript
+[
+  {
+    field: 'image',
+    headerName: 'Profile',
+    cellRenderer: params => `
+      <div style="display: flex; align-items: center;">
+        <img src="${params.value}" style="height: 30px; border-radius: 50%;"/>
+        <span style="margin-left: 10px;">${params.data.name}</span>
+      </div>
+    `
+  },
+  {
+    field: 'status',
+    cellEditor: 'agSelectCellEditor',
+    cellEditorParams: {
+      values: ['Active', 'Pending', 'Inactive']
+    }
+  }
+]
+```
+
+3. **Custom Event Handlers**
+```javascript
+{
+  onRowSelected: params => {
+    const selectedRows = params.api.getSelectedRows();
+    wwLib.wwVariable.updateValue('selectedItems', selectedRows);
+  },
+  onCellValueChanged: params => {
+    if (params.newValue && params.column.colId === 'email') {
+      const isValid = /^[^@]+@[^@]+\.[^@]+$/.test(params.newValue);
+      if (!isValid) {
+        params.api.undoCellEditing();
+        wwLib.wwNotification.open({
+          text: 'Invalid email format',
+          type: 'error'
+        });
+      }
+    }
+  }
+}
+```
+
+## Common Properties
+- `tableData`: Array of objects to display
+- `theme`: Visual theme ('quartz', 'alpine', 'balham')
+- `advancedMode`: Enable code injection mode
+
+## Events
+- `cellValueChanged`: Triggered on cell edits
+- `rowSelected`: Triggered on row selection
+- `error`: Triggered on errors
+
+## Troubleshooting
+1. **Data Not Displaying**
+   - Check data format
+   - Verify column field names
+   - Check console for errors
+
+2. **Custom Code Issues**
+   - Validate JavaScript syntax
+   - Ensure proper escaping
+   - Check browser console
+
+For more examples, visit [AG Grid Documentation](https://www.ag-grid.com/documentation/)
