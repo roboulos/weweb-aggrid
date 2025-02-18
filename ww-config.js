@@ -74,6 +74,13 @@ export default {
       propertyHelp: { tooltip: 'Custom event handlers for the grid' }
     },
     // Grid Layout
+    height: {
+      label: { en: 'Grid Height' },
+      type: 'Text',
+      section: 'layout',
+      defaultValue: '500px',
+      propertyHelp: { tooltip: 'Set grid height (e.g., 500px, 50vh, etc.)' }
+    },
     rowHeight: {
       label: { en: 'Row Height' },
       type: 'Number',

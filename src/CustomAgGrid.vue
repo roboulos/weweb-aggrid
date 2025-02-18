@@ -1,5 +1,8 @@
 <template>
-  <div class="ag-grid-wrapper" :style="{ fontFamily: content?.fontFamily || 'Arial, sans-serif' }">
+  <div class="ag-grid-wrapper" :style="{ 
+    fontFamily: content?.fontFamily || 'Arial, sans-serif',
+    height: content?.height || '500px'
+  }">
     <div 
       ref="agGridElement"
       class="ag-grid-container"
@@ -567,17 +570,21 @@
   
   <style lang="scss" scoped>
   .ag-grid-wrapper {
-  width: 100%;
-  height: 100%;
-  min-height: 400px;
-  position: relative;
-  overflow: hidden;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
   
   .ag-grid-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: auto;
+    width: 100%;
+    flex: 1;
+    position: relative;
+    overflow: auto;
+    min-height: 0;
   
   &.is-loading {
   pointer-events: none;
