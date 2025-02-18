@@ -73,7 +73,27 @@ export default {
       hidden: content => !content.advancedMode,
       propertyHelp: { tooltip: 'Custom event handlers for the grid' }
     },
-    // Grid Layout
+    // Grid Layout and Appearance
+    theme: {
+      label: { en: 'Grid Theme' },
+      type: 'TextSelect',
+      section: 'layout',
+      defaultValue: 'alpine',
+      options: {
+        options: [
+          { value: 'alpine', label: 'Alpine (Light)' },
+          { value: 'alpine-dark', label: 'Alpine Dark' },
+          { value: 'balham', label: 'Balham (Classic)' },
+          { value: 'material', label: 'Material' }
+        ]
+      }
+    },
+    fontFamily: {
+      label: { en: 'Font Family' },
+      type: 'Text',
+      section: 'layout',
+      defaultValue: 'Arial, sans-serif'
+    },
     rowHeight: {
       label: { en: 'Row Height' },
       type: 'Number',
@@ -94,6 +114,18 @@ export default {
       section: 'layout',
       defaultValue: 10,
       options: { min: 5, max: 100 }
+    },
+    enableRowHover: {
+      label: { en: 'Enable Row Hover' },
+      type: 'OnOff',
+      section: 'layout',
+      defaultValue: true
+    },
+    enablePagination: {
+      label: { en: 'Enable Pagination' },
+      type: 'OnOff',
+      section: 'layout',
+      defaultValue: true
     },
     checkboxSelectionField: {
       label: { en: 'Selection Column' },
