@@ -25,18 +25,21 @@ export default {
     icon: 'table'
   },
   properties: {
+    /* wwEditor:start */
     // Advanced Configuration
     advancedMode: {
       label: { en: 'Advanced Mode' },
       type: 'Boolean',
-      section: 'settings',
+      section: 'advanced',
       defaultValue: false,
+      /* wwEditor:end */
       propertyHelp: { tooltip: 'Enable to use custom AG Grid configuration' }
     },
+    // Advanced Grid Options
     gridOptions: {
       label: { en: 'Grid Options' },
       type: 'Text',
-      section: 'settings',
+      section: 'advanced',
       defaultValue: '{"defaultColDef":{"sortable":true,"filter":true}}',
       options: {
         type: 'code',
@@ -45,10 +48,11 @@ export default {
       hidden: content => !content.advancedMode,
       propertyHelp: { tooltip: 'Custom AG Grid options in JSON format' }
     },
+    // Advanced Column Definitions
     columnDefsCode: {
       label: { en: 'Column Definitions Code' },
       type: 'Text',
-      section: 'settings',
+      section: 'advanced',
       defaultValue: '[{"field":"name","headerName":"Name","width":150,"cellStyle":{"color":"#2196F3","fontWeight":"bold"}}]',
       options: {
         type: 'code',
@@ -57,10 +61,11 @@ export default {
       hidden: content => !content.advancedMode,
       propertyHelp: { tooltip: 'Custom column definitions with full AG Grid features' }
     },
+    // Advanced Event Handlers
     customEvents: {
       label: { en: 'Custom Events' },
       type: 'Text',
-      section: 'settings',
+      section: 'advanced',
       defaultValue: '{"onCellClicked":true,"onRowSelected":true,"onFilterChanged":true}',
       options: {
         type: 'code',
