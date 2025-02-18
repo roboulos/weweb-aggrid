@@ -2,13 +2,14 @@
   "name": "weweb-ag-grid-component",
   "version": "1.0.1",
   "scripts": {
-    "build": "weweb build",
-    "serve": "weweb serve"
+  "build": "weweb build",
+  "serve": "weweb serve"
   },
   "dependencies": {
-    "lodash": "^4.17.21"
+  "ag-grid-community": "^31.0.3",
+  "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@weweb/cli": "latest"
+  "@weweb/cli": "latest"
   }
-}
+  }
