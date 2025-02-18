@@ -38,7 +38,7 @@
   let isUpdating = false;
   
   // Grid state management
-  const { value: gridState, setValue: setGridState } = wwLib.wwVariable.useComponentVariable({
+  const { value: gridState, setValue: setGridState } = (typeof wwLib !== 'undefined' ? wwLib.wwVariable.useComponentVariable({
   uid: props.uid,
   name: 'gridState',
   defaultValue: {
@@ -48,7 +48,7 @@
   filterModel: null,
   sortModel: null
   }
-  });
+  }) : { value: {}, setValue: () => {} });
   
   // Compute theme class
   const gridThemeClass = computed(() => `ag-theme-${props.content?.theme || 'quartz'}`);
