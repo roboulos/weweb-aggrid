@@ -125,8 +125,31 @@ export default {
                     { value: 'timestamp', label: 'Timestamp' },
                     { value: 'boolean', label: 'Boolean' },
                     { value: 'checkbox', label: 'Checkbox' },
-                    { value: 'dropdown', label: 'Dropdown' }
+                    { value: 'dropdown', label: 'Dropdown' },
+                    { value: 'custom', label: 'Custom' }
                   ]
+                }
+              },
+              cellRenderer: {
+                label: 'Cell Renderer',
+                type: 'Script',
+                options: {
+                  placeholder: 'params => { /* return HTML or text */ }'
+                },
+                hidden: content => content.dataType !== 'custom'
+              },
+              cellStyle: {
+                label: 'Cell Style',
+                type: 'Script',
+                options: {
+                  placeholder: 'params => ({ /* return style object */ })'
+                }
+              },
+              valueFormatter: {
+                label: 'Value Formatter',
+                type: 'Script',
+                options: {
+                  placeholder: 'params => { /* return formatted value */ }'
                 }
               },
               dropdownOptions: {
