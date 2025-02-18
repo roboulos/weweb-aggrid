@@ -68,36 +68,49 @@
   
   // Load AG Grid resources with proper error handling
   async function loadAgGridResources() {
-  try {
-  if (!window.__agGridResourcesLoaded) {
-  window.__agGridResourcesLoaded = true;
-  
-  // Load AG Grid script
-  await new Promise((resolve, reject) => {
-  const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js';
-  script.onload = resolve;
-  script.onerror = reject;
-  document.body.appendChild(script);
-  });
-  
-  // Load base CSS
-  const styleGrid = document.createElement('link');
-  styleGrid.rel = 'stylesheet';
-  styleGrid.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css';
-  document.head.appendChild(styleGrid);
-  
-  // Load theme CSS
-  const themeName = props.content?.theme || 'quartz';
-  const styleTheme = document.createElement('link');
-  styleTheme.rel = 'stylesheet';
-  styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${themeName}.css`;
-  styleTheme.setAttribute('data-ag-theme', themeName);
-  document.head.appendChild(styleTheme);
-  
-  setGridState({ ...gridState.value, scriptLoaded: true, cssLoaded: true });
-  }
-  } catch (error) {
+    try {
+      // Use a unique identifier for this component instance
+      const instanceId = `ag-grid-${props.uid}`;
+      if (!window[instanceId]) {
+        window[instanceId] = true;
+
+        // Create container for AG Grid resources if it doesn't exist
+        const resourceContainer = document.getElementById('ww-ag-grid-resources') || (() => {
+          const container = document.createElement('div');
+          container.id = 'ww-ag-grid-resources';
+          document.body.appendChild(container);
+          return container;
+        })();
+
+        // Load AG Grid script if not already loaded
+        if (!window.agGrid) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js';
+            script.onload = resolve;
+            script.onerror = reject;
+            resourceContainer.appendChild(script);
+          });
+        }
+
+        // Load CSS files if not already loaded
+        const cssFiles = [
+          'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css',
+          `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${props.content?.theme || 'quartz'}.css`
+        ];
+
+        for (const href of cssFiles) {
+          if (!document.querySelector(`link[href="${href}"]`)) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            resourceContainer.appendChild(link);
+          }
+        }
+
+        setGridState({ ...gridState.value, scriptLoaded: true, cssLoaded: true });
+      }
+    } catch (error) {
   console.error('Failed to load AG Grid resources:', error);
   emit('trigger-event', {
   name: 'error',
@@ -200,10 +213,25 @@
   });
   
   onBeforeUnmount(() => {
-  if (gridApi) {
-  gridApi.destroy();
-  gridApi = null;
-  }
+    if (gridApi) {
+      gridApi.destroy();
+      gridApi = null;
+    }
+
+    // Clean up instance flag
+    const instanceId = `ag-grid-${props.uid}`;
+    if (window[instanceId]) {
+      delete window[instanceId];
+    }
+
+    // Only remove resources if this is the last AG Grid instance
+    const hasOtherInstances = Object.keys(window).some(key => key.startsWith('ag-grid-') && key !== instanceId);
+    if (!hasOtherInstances) {
+      const resourceContainer = document.getElementById('ww-ag-grid-resources');
+      if (resourceContainer) {
+        resourceContainer.remove();
+      }
+    }
   });
   
   return {
