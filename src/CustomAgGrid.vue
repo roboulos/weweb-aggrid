@@ -121,12 +121,17 @@
   
   // Initialize grid with proper error handling
   async function initializeAgGrid() {
+    console.log('Initializing AG Grid with content:', props.content);
     if (!window.agGrid || !agGridElement.value) {
       console.warn('AG Grid or element not ready, waiting...');
       return;
     }
   
   try {
+  console.log('Creating grid options with data:', props.content?.tableData);
+  console.log('Data type:', typeof props.content?.tableData);
+  console.log('Is Array:', Array.isArray(props.content?.tableData));
+
   const gridOptions = {
   columnDefs: props.content?.columnDefs || [],
   defaultColDef: {
@@ -136,7 +141,7 @@
   resizable: true,
   minWidth: 150
   },
-  rowData: props.content?.tableData || [],
+  rowData: ensureValidData(props.content?.tableData),
   pagination: true,
   paginationPageSize: props.content?.pageSize || 25,
   rowSelection: 'multiple',
@@ -200,11 +205,26 @@
   }
   };
   
+  // Ensure data is always in the correct format
+  const ensureValidData = (data) => {
+    if (!data) return [];
+    if (typeof data === 'object' && !Array.isArray(data)) {
+      console.warn('Data is an object but not an array, attempting to convert...');
+      // If it's an object with numeric keys, convert to array
+      const values = Object.values(data);
+      if (values.length > 0) return values;
+      return [];
+    }
+    return Array.isArray(data) ? data : [];
+  };
+
   // Watch for data changes with immediate effect
   watch(() => props.content?.tableData, (newData) => {
     if (gridApi && !isUpdating) {
       console.log('Updating grid data:', newData);
-      gridApi.setRowData(newData || []);
+      const validData = ensureValidData(newData);
+      console.log('Processed data:', validData);
+      gridApi.setRowData(validData);
     }
   }, { deep: true, immediate: true });
 
@@ -223,9 +243,11 @@
       await initializeAgGrid();
       
       // Ensure data is set after grid is initialized
-      if (gridApi && props.content?.tableData) {
-        console.log('Setting initial data:', props.content.tableData);
-        gridApi.setRowData(props.content.tableData);
+      if (gridApi) {
+        console.log('Setting initial data:', props.content?.tableData);
+        const validData = ensureValidData(props.content?.tableData);
+        console.log('Processed initial data:', validData);
+        gridApi.setRowData(validData);
       }
     } catch (error) {
       console.error('Failed to initialize grid:', error);
