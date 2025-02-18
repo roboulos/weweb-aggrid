@@ -128,11 +128,57 @@
     }
   
   try {
-  console.log('Creating grid options with data:', props.content?.tableData);
-  console.log('Data type:', typeof props.content?.tableData);
-  console.log('Is Array:', Array.isArray(props.content?.tableData));
+    console.log('Initializing grid with mode:', props.content?.advancedMode ? 'advanced' : 'basic');
 
-  const gridOptions = {
+    // Parse custom code in advanced mode
+    let customGridOptions = {};
+    let customColumnDefs = [];
+    let customEvents = {};
+
+    if (props.content?.advancedMode) {
+      try {
+        // Parse grid options
+        if (props.content?.gridOptions) {
+          customGridOptions = Function('return ' + props.content.gridOptions)();
+        }
+        // Parse column definitions
+        if (props.content?.columnDefsCode) {
+          customColumnDefs = Function('return ' + props.content.columnDefsCode)();
+        }
+        // Parse custom events
+        if (props.content?.customEvents) {
+          customEvents = Function('return ' + props.content.customEvents)();
+        }
+      } catch (parseError) {
+        console.error('Error parsing custom code:', parseError);
+        emit('trigger-event', {
+          name: 'error',
+          event: { message: 'Invalid custom code: ' + parseError.message, type: 'error' }
+        });
+      }
+    }
+
+    const gridOptions = props.content?.advancedMode ? {
+      // Base options
+      rowData: ensureValidData(props.content?.tableData),
+      columnDefs: customColumnDefs,
+      // Merge custom options
+      ...customGridOptions,
+      // Merge custom events
+      ...customEvents,
+      // Ensure required callbacks are preserved
+      onGridReady: (params) => {
+        gridApi = params.api;
+        gridColumnApi = params.columnApi;
+        if (props.content?.autoSizeColumns) {
+          params.api.sizeColumnsToFit();
+        }
+        // Call custom onGridReady if provided
+        if (customEvents.onGridReady) {
+          customEvents.onGridReady(params);
+        }
+      }
+    } : {
   columnDefs: props.content?.columnDefs || [],
   defaultColDef: {
   editable: true,

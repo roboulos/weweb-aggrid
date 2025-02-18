@@ -25,6 +25,71 @@ export default {
     icon: 'table'
   },
   properties: {
+    // Advanced Configuration
+    advancedMode: {
+      label: { en: 'Advanced Mode' },
+      type: 'Boolean',
+      section: 'settings',
+      defaultValue: false,
+      propertyHelp: { tooltip: 'Enable to use custom AG Grid configuration' }
+    },
+    gridOptions: {
+      label: { en: 'Grid Options' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: '{
+  // Paste your AG Grid options here
+  // Example:
+  defaultColDef: {
+    sortable: true,
+    filter: true
+  }
+}',
+      options: {
+        type: 'code',
+        language: 'javascript'
+      },
+      hidden: content => !content.advancedMode,
+      propertyHelp: { tooltip: 'Custom AG Grid options in JSON format' }
+    },
+    columnDefsCode: {
+      label: { en: 'Column Definitions Code' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: '[
+  // Paste your column definitions here
+  // Example:
+  {
+    field: "name",
+    cellRenderer: params => `<img src="${params.value}" style="height: 30px;"/>`
+  }
+]',
+      options: {
+        type: 'code',
+        language: 'javascript'
+      },
+      hidden: content => !content.advancedMode,
+      propertyHelp: { tooltip: 'Custom column definitions with full AG Grid features' }
+    },
+    customEvents: {
+      label: { en: 'Custom Events' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: '{
+  // Paste your event handlers here
+  // Example:
+  onCellClicked: params => {
+    // Your code here
+    console.log("Cell clicked:", params);
+  }
+}',
+      options: {
+        type: 'code',
+        language: 'javascript'
+      },
+      hidden: content => !content.advancedMode,
+      propertyHelp: { tooltip: 'Custom event handlers for the grid' }
+    },
     // Data properties
     tableData: {
       label: { en: 'Table Data' },
