@@ -1,35 +1,35 @@
 <template>
   <div class="ag-grid-wrapper" :style="{ fontFamily: content?.fontFamily || 'Arial, sans-serif' }">
-  <div 
-  ref="agGridElement"
-  class="ag-grid-container"
-  :class="[gridThemeClass, { 'is-loading': gridState.isLoading }]"
-  :style="gridCustomStyles"
-  >
-  <transition name="fade">
-  <div v-if="gridState.isLoading" class="loading-overlay">
-  <div class="loading-content">
-  {{ content?.loadingMessage || 'Updating...' }}
+    <div 
+      ref="agGridElement"
+      class="ag-grid-container"
+      :class="[gridThemeClass, { 'is-loading': gridState.isLoading }]"
+      :style="gridCustomStyles"
+    >
+      <transition name="fade">
+        <div v-if="gridState.isLoading" class="loading-overlay">
+          <div class="loading-content">
+            {{ content?.loadingMessage || 'Updating...' }}
+          </div>
+        </div>
+      </transition>
+    </div>
   </div>
-  </div>
-  </transition>
-  </div>
-  </div>
-  </template>
+</template>
   
   <script>
   import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
   import { debounce } from 'lodash';
   
   export default {
-  name: "CustomAgGrid",
-  props: {
-  content: { type: Object, required: true },
-  uid: { type: String, required: true },
-  /* wwEditor:start */
-  wwEditorState: { type: Object, required: true },
-  /* wwEditor:end */
-  },
+    name: "CustomAgGrid",
+    props: {
+      content: { type: Object, required: true },
+      uid: { type: String, required: true },
+      /* wwEditor:start */
+      wwEditorState: { type: Object, required: true },
+      /* wwEditor:end */
+    },
   emits: ['trigger-event'],
   setup(props, { emit }) {
   const agGridElement = ref(null);

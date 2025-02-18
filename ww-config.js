@@ -37,12 +37,7 @@ export default {
       label: { en: 'Grid Options' },
       type: 'Text',
       section: 'settings',
-      defaultValue: '{
-  "defaultColDef": {
-    "sortable": true,
-    "filter": true
-  }
-}',
+      defaultValue: '{"defaultColDef":{"sortable":true,"filter":true}}',
       options: {
         type: 'code',
         language: 'javascript'
@@ -54,17 +49,7 @@ export default {
       label: { en: 'Column Definitions Code' },
       type: 'Text',
       section: 'settings',
-      defaultValue: '[
-  {
-    "field": "name",
-    "headerName": "Name",
-    "width": 150,
-    "cellStyle": {
-      "color": "#2196F3",
-      "fontWeight": "bold"
-    }
-  }
-]',
+      defaultValue: '[{"field":"name","headerName":"Name","width":150,"cellStyle":{"color":"#2196F3","fontWeight":"bold"}}]',
       options: {
         type: 'code',
         language: 'javascript'
@@ -76,11 +61,7 @@ export default {
       label: { en: 'Custom Events' },
       type: 'Text',
       section: 'settings',
-      defaultValue: '{
-  "onCellClicked": true,
-  "onRowSelected": true,
-  "onFilterChanged": true
-}',
+      defaultValue: '{"onCellClicked":true,"onRowSelected":true,"onFilterChanged":true}',
       options: {
         type: 'code',
         language: 'javascript'
