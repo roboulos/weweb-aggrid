@@ -29,10 +29,9 @@ export default {
     // Advanced Configuration
     advancedMode: {
       label: { en: 'Advanced Mode' },
-      type: 'Boolean',
+      type: 'OnOff',
       section: 'advanced',
       defaultValue: false,
-      /* wwEditor:end */
       propertyHelp: { tooltip: 'Enable to use custom AG Grid configuration' }
     },
     // Advanced Grid Options
