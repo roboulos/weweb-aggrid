@@ -260,7 +260,18 @@
       }
     }
 
-    const gridOptions = props.content?.advancedMode ? {
+    // Get row class rules from column definitions
+  const getRowClassRules = () => {
+    const rules = {};
+    props.content?.columnDefs?.forEach(col => {
+      if (col.rowClassRules) {
+        Object.assign(rules, col.rowClassRules);
+      }
+    });
+    return rules;
+  };
+
+  const gridOptions = props.content?.advancedMode ? {
       // Base options
       rowData: ensureValidData(props.content?.tableData),
       columnDefs: customColumnDefs,
@@ -283,12 +294,22 @@
     } : {
   columnDefs: transformColumnDefs(props.content?.columnDefs || []),
   defaultColDef: {
-  editable: true,
-  sortable: props.content?.enableSorting ?? true,
-  filter: props.content?.enableFiltering ?? true,
-  resizable: true,
-  minWidth: 150
+    editable: true,
+    sortable: props.content?.enableSorting ?? true,
+    filter: props.content?.enableFiltering ?? true,
+    resizable: true,
+    minWidth: 150,
+    checkboxSelection: col => col.field === (props.content?.checkboxSelectionField || '_checkbox'),
+    headerCheckboxSelection: col => col.field === (props.content?.checkboxSelectionField || '_checkbox')
   },
+  rowSelection: 'multiple',
+  rowMultiSelectWithClick: true,
+  rowClassRules: getRowClassRules(),
+  rowHeight: props.content?.rowHeight || 40,
+  headerHeight: props.content?.headerHeight || 40,
+  pagination: true,
+  paginationPageSize: props.content?.pageSize || 10,
+  suppressPaginationPanel: false,
   rowData: ensureValidData(props.content?.tableData),
   pagination: true,
   paginationPageSize: props.content?.pageSize || 25,
@@ -472,10 +493,48 @@
   }
   
   .loading-content {
-  background: white;
-  padding: 1rem 2rem;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: white;
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  :deep(.ag-checkbox-input-wrapper) {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ddd;
+    border-radius: 3px;
+    &.ag-checked {
+      background-color: #1a73e8;
+      border-color: #1a73e8;
+      &::after {
+        color: white;
+      }
+    }
+  }
+
+  :deep(.ag-paging-panel) {
+    height: 40px;
+    padding: 0 12px;
+    font-size: 13px;
+    color: #666;
+    .ag-paging-row-summary-panel {
+      margin: 0 12px;
+    }
+    .ag-paging-button {
+      cursor: pointer;
+      opacity: 0.5;
+      &:hover:not(.ag-disabled) {
+        opacity: 1;
+      }
+    }
+  }
+
+  :deep(.ag-row) {
+    transition: background-color 0.2s;
+    &:hover {
+      background-color: #f5f5f5;
+    }
   }
   }
   </style>

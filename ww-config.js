@@ -73,6 +73,36 @@ export default {
       hidden: content => !content.advancedMode,
       propertyHelp: { tooltip: 'Custom event handlers for the grid' }
     },
+    // Grid Layout
+    rowHeight: {
+      label: { en: 'Row Height' },
+      type: 'Number',
+      section: 'layout',
+      defaultValue: 40,
+      options: { min: 25, max: 100 }
+    },
+    headerHeight: {
+      label: { en: 'Header Height' },
+      type: 'Number',
+      section: 'layout',
+      defaultValue: 40,
+      options: { min: 25, max: 100 }
+    },
+    pageSize: {
+      label: { en: 'Page Size' },
+      type: 'Number',
+      section: 'layout',
+      defaultValue: 10,
+      options: { min: 5, max: 100 }
+    },
+    checkboxSelectionField: {
+      label: { en: 'Selection Column' },
+      type: 'Text',
+      section: 'layout',
+      defaultValue: '_checkbox',
+      propertyHelp: { tooltip: 'Field name for checkbox selection column' }
+    },
+
     // Data properties
     tableData: {
       label: { en: 'Table Data' },
@@ -110,6 +140,16 @@ export default {
           options: {
             item: {
               field: { label: 'Field', type: 'Text', options: { placeholder: 'Data field name' } },
+              rowClassRules: {
+                label: 'Row Style Rules',
+                type: 'Object',
+                options: {
+                  item: {
+                    className: { label: 'CSS Class', type: 'Text' },
+                    condition: { label: 'Condition', type: 'Text', options: { placeholder: 'params.data.status === "active"' } }
+                  }
+                }
+              },
               headerName: { label: 'Header', type: 'Text', options: { placeholder: 'Column header name' } },
               editable: { label: 'Editable', type: 'Boolean' },
               width: { label: 'Width', type: 'Number', options: { min: 50, max: 500 } },
