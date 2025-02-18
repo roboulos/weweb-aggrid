@@ -119,6 +119,96 @@
   }
   }
   
+  // Transform column definitions with proper data handling
+  function transformColumnDefs(columnDefs) {
+    return columnDefs.map(col => {
+      const column = { ...col };
+
+      // Handle timestamp data type
+      if (column.dataType === 'timestamp') {
+        column.valueFormatter = params => {
+          if (!params.value) return '';
+          return new Date(params.value).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        };
+      }
+
+      // Handle boolean data type
+      if (column.dataType === 'boolean') {
+        column.cellRenderer = params => {
+          return `<div style="display: flex; align-items: center; height: 100%;">
+            <input type="checkbox" 
+              ${params.value ? 'checked' : ''} 
+              onclick="return false;"
+              style="margin: 0 5px;"
+            />
+          </div>`;
+        };
+      }
+
+      // Handle dropdown data type
+      if (column.dataType === 'dropdown') {
+        column.cellEditor = 'agSelectCellEditor';
+        column.cellEditorParams = {
+          values: column.dropdownOptions || []
+        };
+      }
+
+      // Handle rich text data type
+      if (column.dataType === 'richtext') {
+        column.cellRenderer = params => {
+          const container = document.createElement('div');
+          container.style.whiteSpace = 'normal';
+          container.style.wordBreak = 'break-word';
+          container.style.cursor = 'pointer';
+
+          const originalHtml = params.value || '';
+          const trimmedHtml = originalHtml.trim();
+
+          if (trimmedHtml === '' || trimmedHtml === '<p></p>') {
+            container.innerHTML = '<i class="ph ph-plus-square" style="font-size: 24px;"></i>';
+          } else {
+            let truncatedHtml = truncateHtml(originalHtml, 300);
+            if (typeof DOMPurify !== 'undefined') {
+              truncatedHtml = DOMPurify.sanitize(truncatedHtml);
+            }
+            container.innerHTML = truncatedHtml;
+          }
+
+          if (column.onClick) {
+            container.addEventListener('click', () => {
+              if (typeof wwLib !== 'undefined') {
+                wwLib.executeWorkflow(column.onClick.workflowId, {
+                  row: params.data,
+                  type: column.onClick.type || 'click'
+                });
+              }
+            });
+          }
+
+          return container;
+        };
+      }
+
+      return column;
+    });
+  }
+
+  // Helper function to truncate HTML safely
+  function truncateHtml(html, maxLength) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    let text = div.textContent || div.innerText || '';
+    if (text.length <= maxLength) return html;
+    text = text.substr(0, maxLength) + '...';
+    return text;
+  }
+
   // Initialize grid with proper error handling
   async function initializeAgGrid() {
     console.log('Initializing AG Grid with content:', props.content);
@@ -191,7 +281,7 @@
         }
       }
     } : {
-  columnDefs: props.content?.columnDefs || [],
+  columnDefs: transformColumnDefs(props.content?.columnDefs || []),
   defaultColDef: {
   editable: true,
   sortable: props.content?.enableSorting ?? true,

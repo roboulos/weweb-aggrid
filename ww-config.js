@@ -124,33 +124,31 @@ export default {
                     { value: 'text', label: 'Text' },
                     { value: 'timestamp', label: 'Timestamp' },
                     { value: 'boolean', label: 'Boolean' },
-                    { value: 'checkbox', label: 'Checkbox' },
                     { value: 'dropdown', label: 'Dropdown' },
-                    { value: 'custom', label: 'Custom' }
+                    { value: 'richtext', label: 'Rich Text' }
                   ]
                 }
               },
-              cellRenderer: {
-                label: 'Cell Renderer',
-                type: 'Script',
+              onClick: {
+                label: 'On Click Action',
+                type: 'Object',
+                defaultValue: {},
                 options: {
-                  placeholder: 'params => { /* return HTML or text */ }'
+                  item: {
+                    workflowId: { 
+                      label: 'Workflow ID', 
+                      type: 'Text',
+                      options: { placeholder: 'Enter workflow ID' }
+                    },
+                    type: { 
+                      label: 'Action Type', 
+                      type: 'Text',
+                      defaultValue: 'click',
+                      options: { placeholder: 'Action type (e.g., click, edit)' }
+                    }
+                  }
                 },
-                hidden: content => content.dataType !== 'custom'
-              },
-              cellStyle: {
-                label: 'Cell Style',
-                type: 'Script',
-                options: {
-                  placeholder: 'params => ({ /* return style object */ })'
-                }
-              },
-              valueFormatter: {
-                label: 'Value Formatter',
-                type: 'Script',
-                options: {
-                  placeholder: 'params => { /* return formatted value */ }'
-                }
+                hidden: content => content.dataType !== 'richtext'
               },
               dropdownOptions: {
                 label: 'Dropdown Options',
