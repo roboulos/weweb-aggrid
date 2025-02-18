@@ -20,7 +20,6 @@
 <script>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { debounce } from 'lodash';
-import { themeQuartz } from 'ag-grid-community';
 
 export default {
   name: "CustomAgGrid",
@@ -133,9 +132,9 @@ export default {
         return props.customTheme;
       }
       if (props.content && props.content.themeParams && Object.keys(props.content.themeParams).length > 0) {
-        return themeQuartz.withParams(props.content.themeParams);
+        return window.agGrid.themeQuartz.withParams(props.content.themeParams);
       }
-      return themeQuartz;
+      return window.agGrid.themeQuartz;
     });
     
     // Process column definitions for custom formatting.
@@ -192,32 +191,35 @@ export default {
     
     // Load AG Grid resources.
     function loadAgGridResources() {
-      console.log('Loading AG Grid resources');
-      if (!window.__agGridResourcesLoaded) {
-        window.__agGridResourcesLoaded = true;
+      return new Promise((resolve, reject) => {
+        if (window.agGrid) { resolve(); return; }
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js';
-        document.body.appendChild(script);
+        script.src = "https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js";
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+
         const styleGrid = document.createElement('link');
-        styleGrid.rel = 'stylesheet';
-        styleGrid.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css';
+        styleGrid.rel = "stylesheet";
+        styleGrid.href = "https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css";
         document.head.appendChild(styleGrid);
-      }
-      // Only load legacy theme CSS if no custom theme parameters or customTheme is provided.
-      if (!(props.content.themeParams && Object.keys(props.content.themeParams).length > 0) && !props.customTheme) {
-        const themeName = props.content?.theme || 'quartz';
-        const existingThemeLink = document.querySelector('link[data-ag-theme]');
-        if (existingThemeLink) existingThemeLink.parentNode.removeChild(existingThemeLink);
+
         const styleTheme = document.createElement('link');
-        styleTheme.rel = 'stylesheet';
-        styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${themeName}.css`;
-        styleTheme.setAttribute('data-ag-theme', themeName);
+        styleTheme.rel = "stylesheet";
+        styleTheme.href = `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${props.content?.theme || 'quartz'}.css`;
         document.head.appendChild(styleTheme);
-      }
+      });
+    }
+
+    // Initialize AG Grid.
+    async function initializeAgGrid() {
+      if (window.agGrid) return window.agGrid;
+      await loadAgGridResources();
+      return window.agGrid;
     }
     
     // Initialize AG Grid.
-    function initializeAgGrid() {
+    function initGrid() {
       if (!window.agGrid) {
         console.warn('AG Grid not loaded yet, retrying...');
         return;
@@ -380,30 +382,32 @@ export default {
       }
     };
     
-    onMounted(() => {
-      console.log('Vue component mounted');
-      loadAgGridResources();
-      applyThemeOverrides();
-      const checkInterval = setInterval(() => {
-        if (window.agGrid) {
-          clearInterval(checkInterval);
-          setGridState({ ...gridState.value, scriptLoaded: true });
-          initializeAgGrid();
-        }
-      }, 100);
-      setTimeout(() => clearInterval(checkInterval), 5000);
+    onMounted(async () => {
+      try {
+        await loadAgGridResources();
+        applyThemeOverrides();
+        initGrid();
+      } catch (error) {
+        console.error('Failed to load AG Grid resources:', error);
+        emit('trigger-event', {
+          name: 'error',
+          event: { message: 'Failed to load AG Grid resources', type: 'error' }
+        });
+      }
     });
     
     onBeforeUnmount(() => {
-      if (gridApi) gridApi.destroy();
-      const styleEl = document.getElementById('custom-theme-overrides');
-      if (styleEl && styleEl.parentNode) {
-        styleEl.parentNode.removeChild(styleEl);
+      if (gridApi) {
+        gridApi.destroy();
       }
-      const legacyThemeLink = document.querySelector('link[data-ag-theme]');
-      if (legacyThemeLink && legacyThemeLink.parentNode) {
-        legacyThemeLink.parentNode.removeChild(legacyThemeLink);
-      }
+      const agGridScript = document.querySelector('script[src*="ag-grid-community"]');
+      if (agGridScript) agGridScript.remove();
+
+      const agGridStyles = document.querySelectorAll('link[href*="ag-grid-community"]');
+      agGridStyles.forEach(style => style.remove());
+
+      const customStyles = document.getElementById('custom-theme-overrides');
+      if (customStyles) customStyles.remove();
     });
     
     return {
