@@ -535,23 +535,6 @@
     &:hover {
       background-color: #f5f5f5;
     }
-
-    &.high-priority-row {
-      background-color: #fff3f3;
-      &:hover {
-        background-color: #ffe6e6;
-      }
-    }
-  }
-
-  :deep(.ag-cell) {
-    display: flex;
-    align-items: center;
-
-    &.status-cell {
-      justify-content: center;
-      padding: 0 8px;
-    }
   }
   }
   </style>

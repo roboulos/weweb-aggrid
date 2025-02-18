@@ -32,6 +32,108 @@ Actions:
 Variables:
 - `gridState`: Object - Contains grid loading and error states
 
+## Column Definition Examples
+
+### Basic Text Column
+```javascript
+{
+  "field": "id",
+  "headerName": "ID",
+  "editable": false,
+  "width": 100,
+  "sortable": true,
+  "filter": true,
+  "dataType": "text",
+  "cellStyle": {
+    "fontFamily": "monospace",
+    "color": "#666"
+  }
+}
+```
+
+### Timestamp Column
+```javascript
+{
+  "field": "created_at",
+  "headerName": "Created At",
+  "editable": false,
+  "width": 150,
+  "sortable": true,
+  "filter": true,
+  "dataType": "timestamp"
+}
+```
+
+### Clickable Link Column
+```javascript
+{
+  "field": "product_name",
+  "headerName": "Product Name",
+  "width": 250,
+  "dataType": "text",
+  "cellStyle": {
+    "color": "#1a73e8",
+    "cursor": "pointer"
+  }
+}
+```
+
+### Status Dropdown with Colors
+```javascript
+{
+  "field": "status",
+  "headerName": "Status",
+  "width": 120,
+  "dataType": "dropdown",
+  "dropdownOptions": ["Pending", "Shipped", "Delivered", "Cancelled"],
+  "cellStyle": params => ({
+    "color":
+      params.value === 'Delivered' ? '#32CD32' :
+      params.value === 'Shipped' ? '#1a73e8' :
+      params.value === 'Cancelled' ? '#ff4444' :
+      '#ffa500',
+    "fontWeight": "bold"
+  })
+}
+```
+
+### Dynamic Date Coloring
+```javascript
+{
+  "field": "expected_delivery",
+  "headerName": "Expected Delivery",
+  "width": 150,
+  "dataType": "timestamp",
+  "cellStyle": params => {
+    const now = new Date();
+    const deliveryDate = new Date(params.value);
+    return {
+      "color": deliveryDate < now ? '#ff4444' : '#32CD32'
+    };
+  }
+}
+```
+
+### Currency Column
+```javascript
+{
+  "field": "price",
+  "headerName": "Price",
+  "width": 120,
+  "dataType": "text",
+  "valueFormatter": params => {
+    if (!params.value) return '';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(params.value);
+  },
+  "cellStyle": params => ({
+    "color": parseFloat(params.value) > 1000 ? '#ff4444' : '#32CD32'
+  })
+}
+```
+
 ## Column Definition Features
 
 ### Basic Column Properties
