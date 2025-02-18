@@ -120,8 +120,11 @@
   }
   
   // Initialize grid with proper error handling
-  function initializeAgGrid() {
-  if (!window.agGrid || !agGridElement.value) return;
+  async function initializeAgGrid() {
+    if (!window.agGrid || !agGridElement.value) {
+      console.warn('AG Grid or element not ready, waiting...');
+      return;
+    }
   
   try {
   const gridOptions = {
@@ -197,19 +200,40 @@
   }
   };
   
-  // Watch for data changes
+  // Watch for data changes with immediate effect
   watch(() => props.content?.tableData, (newData) => {
-  if (gridApi && newData && !isUpdating) {
-  gridApi.setRowData(newData);
-  }
-  }, { deep: true });
+    if (gridApi && !isUpdating) {
+      console.log('Updating grid data:', newData);
+      gridApi.setRowData(newData || []);
+    }
+  }, { deep: true, immediate: true });
+
+  // Watch for column definition changes
+  watch(() => props.content?.columnDefs, (newDefs) => {
+    if (gridApi && !isUpdating) {
+      console.log('Updating column definitions:', newDefs);
+      gridApi.setColumnDefs(newDefs || []);
+    }
+  }, { deep: true, immediate: true });
   
   // Component lifecycle
   onMounted(async () => {
-  await loadAgGridResources();
-  if (window.agGrid) {
-  initializeAgGrid();
-  }
+    try {
+      await loadAgGridResources();
+      await initializeAgGrid();
+      
+      // Ensure data is set after grid is initialized
+      if (gridApi && props.content?.tableData) {
+        console.log('Setting initial data:', props.content.tableData);
+        gridApi.setRowData(props.content.tableData);
+      }
+    } catch (error) {
+      console.error('Failed to initialize grid:', error);
+      emit('trigger-event', {
+        name: 'error',
+        event: { message: 'Failed to initialize grid', type: 'error' }
+      });
+    }
   });
   
   onBeforeUnmount(() => {
