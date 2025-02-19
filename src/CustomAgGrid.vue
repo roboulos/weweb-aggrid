@@ -1,7 +1,7 @@
 <template>
   <div class="ag-grid-wrapper" :style="{ 
     fontFamily: content?.fontFamily || 'Arial, sans-serif',
-    height: content?.height || '500px'
+    height: '500px'
   }">
     <div 
       ref="agGridElement"
@@ -578,6 +578,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     box-sizing: border-box;
+    height: 500px;
   
   .ag-grid-container {
     width: 100%;
