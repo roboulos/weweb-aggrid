@@ -135,7 +135,8 @@ export default {
             sortable: true,
             filter: true,
             dataType: 'text',
-            dropdownOptions: []
+            dropdownOptions: [],
+            wrapText: false
           },
           options: {
             item: {
@@ -163,6 +164,7 @@ export default {
                   options: [
                     { value: 'text', label: 'Text' },
                     { value: 'timestamp', label: 'Timestamp' },
+                    { value: 'date', label: 'Date Only' },
                     { value: 'boolean', label: 'Boolean' },
                     { value: 'dropdown', label: 'Dropdown' },
                     { value: 'richtext', label: 'Rich Text' }
@@ -199,6 +201,11 @@ export default {
                   getItemLabel(item, index) { return `Option ${index + 1}`; },
                   item: { type: 'Text' }
                 }
+              },
+              wrapText: { 
+                label: 'Wrap Text', 
+                type: 'Boolean',
+                defaultValue: false
               }
             }
           }
@@ -317,6 +324,14 @@ export default {
       bindable: true,
       defaultValue: false
     },
+    showAddRowButton: {
+      label: { en: 'Show Add Row Button' },
+      type: 'OnOff',
+      section: 'settings',
+      bindable: true,
+      defaultValue: false,
+      propertyHelp: { tooltip: 'Show a button to add new blank rows to the grid' }
+    },
     // Theme override properties (for CSS-based overrides)
     accentColor: {
       label: { en: 'Accent Color' },
@@ -420,6 +435,16 @@ export default {
       event: { rowData: {} }
     },
     {
+      name: 'rowDeselected',
+      label: { en: 'On row deselected' },
+      event: { rowData: {} }
+    },
+    {
+      name: 'rowAdded',
+      label: { en: 'On row added' },
+      event: { newRow: {} }
+    },
+    {
       name: 'error',
       label: { en: 'On error' },
       event: { message: '', type: '' }
@@ -458,4 +483,3 @@ export default {
     }
   ]
 };
-

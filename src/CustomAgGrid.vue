@@ -17,6 +17,9 @@
         </div>
       </transition>
     </div>
+    <div v-if="content?.showAddRowButton" class="add-row-button">
+      <button @click="addNewRow">+ Add Row</button>
+    </div>
   </div>
 </template>
   
@@ -127,6 +130,23 @@
     return columnDefs.map(col => {
       const column = { ...col };
 
+      // Handle text wrapping
+      if (column.wrapText) {
+        column.cellStyle = {
+          ...(column.cellStyle || {}),
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+          lineHeight: '1.2'
+        };
+      } else {
+        column.cellStyle = {
+          ...(column.cellStyle || {}),
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        };
+      }
+
       // Add checkbox column if specified
       if (column.field === '_checkbox' || column.checkboxSelection) {
         column.headerName = '';
@@ -191,6 +211,25 @@
             };
           };
         }
+      }
+
+      // Handle date-only data type
+      if (column.dataType === 'date') {
+        column.valueFormatter = params => {
+          if (!params.value) return '';
+          // Format only date portion without time
+          return new Date(params.value).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+        };
+        // Configure date editor
+        column.cellEditor = 'agDateCellEditor';
+        column.cellEditorParams = {
+          // Format that only includes date, not time
+          jsDateFormat: 'MM/dd/yyyy'
+        };
       }
 
       // Handle boolean data type
@@ -274,19 +313,28 @@
           const container = document.createElement('div');
           container.style.whiteSpace = 'normal';
           container.style.wordBreak = 'break-word';
+          container.style.lineHeight = '1.4';
+          container.style.maxHeight = `${props.content?.rowHeight * 0.8}px`;
+          container.style.overflow = 'hidden';
           container.style.cursor = 'pointer';
 
           const originalHtml = params.value || '';
           const trimmedHtml = originalHtml.trim();
 
           if (trimmedHtml === '' || trimmedHtml === '<p></p>') {
-            container.innerHTML = '<i class="ph ph-plus-square" style="font-size: 24px;"></i>';
+            container.innerHTML = '<span style="color: #999; font-style: italic;">Click to edit</span>';
           } else {
-            let truncatedHtml = truncateHtml(originalHtml, 300);
+            // More careful HTML sanitization
+            let sanitizedHtml = trimmedHtml;
             if (typeof DOMPurify !== 'undefined') {
-              truncatedHtml = DOMPurify.sanitize(truncatedHtml);
+              sanitizedHtml = DOMPurify.sanitize(sanitizedHtml);
+            } else {
+              // Basic sanitization fallback
+              sanitizedHtml = sanitizedHtml
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/on\w+="[^"]*"/g, '');
             }
-            container.innerHTML = truncatedHtml;
+            container.innerHTML = sanitizedHtml;
           }
 
           if (column.onClick) {
@@ -399,6 +447,19 @@
         if (customEvents.onGridReady) {
           customEvents.onGridReady(params);
         }
+      },
+      onRowSelected: (event) => {
+        if (event.node.isSelected()) {
+          emit('trigger-event', {
+            name: 'rowSelected',
+            event: { rowData: event.data }
+          });
+        } else {
+          emit('trigger-event', {
+            name: 'rowDeselected',
+            event: { rowData: event.data }
+          });
+        }
       }
     } : {
   columnDefs: transformColumnDefs(props.content?.columnDefs || []),
@@ -432,7 +493,20 @@
   params.api.sizeColumnsToFit();
   }
   },
-  onCellValueChanged: handleCellValueChanged
+  onCellValueChanged: handleCellValueChanged,
+  onRowSelected: (event) => {
+    if (event.node.isSelected()) {
+      emit('trigger-event', {
+        name: 'rowSelected',
+        event: { rowData: event.data }
+      });
+    } else {
+      emit('trigger-event', {
+        name: 'rowDeselected',
+        event: { rowData: event.data }
+      });
+    }
+  }
   };
   
   new window.agGrid.Grid(agGridElement.value, gridOptions);
@@ -514,6 +588,36 @@
     }
   }, { deep: true, immediate: true });
   
+  // Add new row functionality
+  const addNewRow = () => {
+    if (!gridApi) return;
+
+    // Create empty row based on existing columns
+    const emptyRow = {};
+    const columnDefs = props.content?.columnDefs || [];
+    columnDefs.forEach(col => {
+      if (col.field && col.field !== '_checkbox') {
+        emptyRow[col.field] = null;
+      }
+    });
+
+    // Add row to the grid
+    const rowData = [...(ensureValidData(props.content?.tableData) || []), emptyRow];
+    gridApi.setRowData(rowData);
+    
+    // Scroll to the new row
+    setTimeout(() => {
+      gridApi.ensureIndexVisible(rowData.length - 1);
+      gridApi.setFocusedCell(rowData.length - 1, columnDefs[0]?.field || '');
+    }, 100);
+
+    // Emit event so the parent component can update data source
+    emit('trigger-event', {
+      name: 'rowAdded',
+      event: { newRow: emptyRow }
+    });
+  };
+
   // Component lifecycle
   onMounted(async () => {
     try {
@@ -562,7 +666,8 @@
   agGridElement,
   gridState,
   gridThemeClass,
-  gridCustomStyles
+  gridCustomStyles,
+  addNewRow
   };
   }
   };
@@ -648,6 +753,25 @@
     transition: background-color 0.2s;
     &:hover {
       background-color: #f5f5f5;
+    }
+  }
+  
+  .add-row-button {
+    padding: 12px;
+    text-align: right;
+    border-top: 1px solid #ddd;
+    background: #f5f5f5;
+    button {
+      background: #1a73e8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+      &:hover {
+        background: #1565c0;
+      }
     }
   }
   }
