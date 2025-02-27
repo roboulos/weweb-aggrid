@@ -229,6 +229,18 @@ export default {
       },
       propertyHelp: { tooltip: 'Enter the full URL of your Xano update endpoint' }
     },
+    xanoCreateEndpoint: {
+      label: { en: 'Xano Create Record Endpoint' },
+      type: 'Text',
+      section: 'settings',
+      bindable: true,
+      defaultValue: '',
+      bindingValidation: {
+        type: 'string',
+        tooltip: 'The Xano API endpoint URL for creating new records'
+      },
+      propertyHelp: { tooltip: 'Enter the full URL of your Xano endpoint for creating new records' }
+    },
     xanoHeaders: {
       label: { en: 'Xano Headers' },
       type: 'Object',
@@ -445,6 +457,11 @@ export default {
       event: { newRow: {} }
     },
     {
+      name: 'recordCreated',
+      label: { en: 'On record created' },
+      event: { newRecord: {} }
+    },
+    {
       name: 'error',
       label: { en: 'On error' },
       event: { message: '', type: '' }
@@ -480,6 +497,11 @@ export default {
       name: 'retryUpdate',
       label: { en: 'Retry Update' },
       action: 'retryUpdate'
+    },
+    {
+      name: 'addNewRecord',
+      label: { en: 'Add New Record' },
+      action: 'addNewRecord'
     }
   ]
 };

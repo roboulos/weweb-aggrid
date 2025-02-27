@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.2.0 (2025-02-27)
+
+### Features Added
+
+1. **XANO Integration for Adding New Records**
+   - Added a new "Xano Create Record Endpoint" configuration option
+   - Implemented functionality to create new records via XANO API
+   - Added "Add New Record" action that can be triggered from external buttons or events
+   - Added "On record created" event that fires when a new record is successfully created
+   - Maintained backward compatibility with local row addition when no endpoint is configured
+
 ## v1.1.0 (2025-02-27)
 
 ### Features Added

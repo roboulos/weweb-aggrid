@@ -589,7 +589,7 @@
   }, { deep: true, immediate: true });
   
   // Add new row functionality
-  const addNewRow = () => {
+  const addNewRow = async () => {
     if (!gridApi) return;
 
     // Create empty row based on existing columns
@@ -601,21 +601,62 @@
       }
     });
 
-    // Add row to the grid
-    const rowData = [...(ensureValidData(props.content?.tableData) || []), emptyRow];
-    gridApi.setRowData(rowData);
-    
-    // Scroll to the new row
-    setTimeout(() => {
-      gridApi.ensureIndexVisible(rowData.length - 1);
-      gridApi.setFocusedCell(rowData.length - 1, columnDefs[0]?.field || '');
-    }, 100);
+    // If XANO create endpoint is configured, use it
+    if (props.content?.xanoCreateEndpoint) {
+      try {
+        setGridState({ ...gridState.value, isLoading: true });
+        
+        // Call XANO endpoint to create new record
+        const response = await fetch(props.content.xanoCreateEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(props.content.xanoHeaders || {})
+          },
+          body: JSON.stringify(emptyRow)
+        });
 
-    // Emit event so the parent component can update data source
-    emit('trigger-event', {
-      name: 'rowAdded',
-      event: { newRow: emptyRow }
-    });
+        if (!response.ok) throw new Error('Failed to create new record');
+        
+        // Get the newly created record from the response
+        const newRecord = await response.json();
+        
+        // Emit event with the new record data
+        emit('trigger-event', {
+          name: 'recordCreated',
+          event: { newRecord }
+        });
+        
+        // Refresh the grid data if needed
+        if (typeof props.content?.refreshData === 'function') {
+          props.content.refreshData();
+        }
+      } catch (error) {
+        console.error('Failed to create new record:', error);
+        emit('trigger-event', {
+          name: 'error',
+          event: { message: error.message, type: 'error' }
+        });
+      } finally {
+        setGridState({ ...gridState.value, isLoading: false });
+      }
+    } else {
+      // Fallback to local row addition if no endpoint is configured
+      const rowData = [...(ensureValidData(props.content?.tableData) || []), emptyRow];
+      gridApi.setRowData(rowData);
+      
+      // Scroll to the new row
+      setTimeout(() => {
+        gridApi.ensureIndexVisible(rowData.length - 1);
+        gridApi.setFocusedCell(rowData.length - 1, columnDefs[0]?.field || '');
+      }, 100);
+
+      // Emit event so the parent component can update data source
+      emit('trigger-event', {
+        name: 'rowAdded',
+        event: { newRow: emptyRow }
+      });
+    }
   };
 
   // Component lifecycle
@@ -663,11 +704,12 @@
   });
   
   return {
-  agGridElement,
-  gridState,
-  gridThemeClass,
-  gridCustomStyles,
-  addNewRow
+    agGridElement,
+    gridState,
+    gridThemeClass,
+    gridCustomStyles,
+    addNewRow,
+    addNewRecord: addNewRow
   };
   }
   };
