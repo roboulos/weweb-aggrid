@@ -133,11 +133,27 @@
   // This is critical for deployed environments where WeWeb might capture clicks
   function preventClickPropagation(event) {
     const agGridElement = document.querySelector('.ag-grid-container');
-    const isEditingCell = document.querySelector('.ag-cell-focus') || document.querySelector('.ag-cell-inline-editing');
     
-    if (agGridElement && isEditingCell && agGridElement.contains(event.target)) {
-      // Only stop propagation if we're editing a cell and the click is inside the grid
-      event.stopPropagation();
+    // Only apply to editing cells, not headers or other grid elements
+    if (agGridElement && agGridElement.contains(event.target)) {
+      // Check if we're clicking directly on an editing cell or within it
+      const isEditingCell = event.target.classList.contains('ag-cell-inline-editing') || 
+                          event.target.closest('.ag-cell-inline-editing');
+      
+      // Check if we're clicking on an input or select element within a cell
+      const isEditingInput = event.target.tagName === 'INPUT' || 
+                           event.target.tagName === 'SELECT' || 
+                           event.target.tagName === 'TEXTAREA';
+      
+      // Don't interfere with header clicks (for sorting/filtering)
+      const isHeaderClick = event.target.classList.contains('ag-header-cell') || 
+                          event.target.closest('.ag-header-cell') || 
+                          event.target.classList.contains('ag-header-cell-text');
+      
+      // Only stop propagation if we're editing a cell and not clicking on headers
+      if ((isEditingCell || isEditingInput) && !isHeaderClick) {
+        event.stopPropagation();
+      }
     }
   }
   
