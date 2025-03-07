@@ -6,12 +6,14 @@
 
 1. **Quick Filter Functionality**
    - Fixed issue where table-wide search was not responding to user input
+   - Added direct method to apply filters immediately on input
    - Added improved error handling and logging for filter operations
    - Ensured proper initialization of the quick filter when the grid loads
    - Added event tracking to better diagnose input-related issues
 
 2. **Preset Filter Buttons**
    - Fixed issue where preset filter buttons were not applying filters when clicked
+   - Added enhanced click event handling with better logging
    - Implemented fallback mechanism when filter instances aren't found
    - Added direct filter model application as an alternative approach
    - Enhanced error reporting for easier troubleshooting
@@ -20,6 +22,18 @@
    - Added reset of filter state during grid initialization
    - Improved lifecycle management for filter operations
    - Enhanced debugging capabilities with detailed console logging
+
+### New Features
+
+1. **Version Display**
+   - Added version number display in the top-right corner of the component
+   - Added configuration option to toggle version display on/off
+   - Improved visibility with subtle styling that doesn't interfere with content
+
+2. **Sample Data**
+   - Added comprehensive sample data for testing all component features
+   - Included examples for column definitions, row data, and preset filters
+   - Added detailed guide for testing different component configurations
 
 ## v1.3.0 (2025-03-07)
 

@@ -15,7 +15,7 @@
           class="quick-filter-input"
           v-model="quickFilterText"
           :placeholder="content?.quickFilterPlaceholder || 'Search...'"
-          @input="e => { console.log('Quick filter input:', e.target.value); }"
+          @input="e => { applyQuickFilter(e.target.value); }"
         />
         <button 
           v-if="quickFilterText" 
@@ -34,7 +34,10 @@
           class="preset-filter-button"
           :class="{ 'active': activePresetFilter === index }"
           :style="{ backgroundColor: filter.color || '#1a73e8', borderColor: filter.color || '#1a73e8' }"
-          @click="applyPresetFilter(filter, index)"
+          @click="() => {
+            console.log('Preset filter button clicked:', filter);
+            applyPresetFilter(filter, index);
+          }"
         >
           {{ filter.label }}
         </button>
@@ -824,20 +827,25 @@
     }
   });
   
-  // Watch for changes to quick filter text
-  watch(quickFilterText, (newValue) => {
+  // Direct method to apply quick filter
+  function applyQuickFilter(value) {
+    console.log('Directly applying quick filter:', value);
     if (gridApi) {
-      console.log('Setting quick filter:', newValue);
-      gridApi.setQuickFilter(newValue);
+      gridApi.setQuickFilter(value);
       
       // Emit filter applied event
       emit('trigger-event', {
         name: 'quickFilterApplied',
-        event: { filterText: newValue }
+        event: { filterText: value }
       });
     } else {
       console.warn('Grid API not available for quick filter');
     }
+  }
+  
+  // Watch for changes to quick filter text
+  watch(quickFilterText, (newValue) => {
+    applyQuickFilter(newValue);
   });
   
   // Add new row functionality
@@ -978,7 +986,11 @@
     gridThemeClass,
     gridCustomStyles,
     addNewRow,
-    addNewRecord: addNewRow
+    addNewRecord: addNewRow,
+    applyQuickFilter,
+    clearQuickFilter,
+    applyPresetFilter,
+    clearPresetFilters
   };
   }
   };
