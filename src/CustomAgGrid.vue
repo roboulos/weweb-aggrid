@@ -114,15 +114,31 @@
           }
         }
 
+        // Add event listener to prevent clicks from bubbling outside the grid
+        // This is crucial for editing in deployed environments
+        document.addEventListener('click', preventClickPropagation, true);
+        
         setGridState({ ...gridState.value, scriptLoaded: true, cssLoaded: true });
       }
     } catch (error) {
-  console.error('Failed to load AG Grid resources:', error);
-  emit('trigger-event', {
-  name: 'error',
-  event: { message: 'Failed to load AG Grid resources', type: 'error' }
-  });
+      console.error('Failed to load AG Grid resources:', error);
+      emit('trigger-event', {
+        name: 'error',
+        event: { message: 'Failed to load AG Grid resources', type: 'error' }
+      });
+    }
   }
+  
+  // Prevent click events from bubbling outside the grid when editing
+  // This is critical for deployed environments where WeWeb might capture clicks
+  function preventClickPropagation(event) {
+    const agGridElement = document.querySelector('.ag-grid-container');
+    const isEditingCell = document.querySelector('.ag-cell-focus') || document.querySelector('.ag-cell-inline-editing');
+    
+    if (agGridElement && isEditingCell && agGridElement.contains(event.target)) {
+      // Only stop propagation if we're editing a cell and the click is inside the grid
+      event.stopPropagation();
+    }
   }
   
   // Transform column definitions with proper data handling
@@ -470,7 +486,13 @@
     resizable: true,
     minWidth: 150,
     checkboxSelection: col => col.field === (props.content?.checkboxSelectionField || '_checkbox'),
-    headerCheckboxSelection: col => col.field === (props.content?.checkboxSelectionField || '_checkbox')
+    headerCheckboxSelection: col => col.field === (props.content?.checkboxSelectionField || '_checkbox'),
+    // Improve editing behavior
+    cellClassRules: {
+      'ag-cell-editing': params => params.node.editing,
+    },
+    // Ensure editors stay focused
+    stopEditingWhenCellsLoseFocus: false
   },
   rowSelection: 'multiple',
   rowMultiSelectWithClick: true,
@@ -481,11 +503,20 @@
   paginationPageSize: props.content?.pageSize || 10,
   suppressPaginationPanel: false,
   rowData: ensureValidData(props.content?.tableData),
-  pagination: true,
-  paginationPageSize: props.content?.pageSize || 25,
-  rowSelection: 'multiple',
+  // Prevent duplicate pagination options
+  // pagination: true, (removed duplicate)
+  // paginationPageSize: props.content?.pageSize || 25, (removed duplicate)
+  // Prevent duplicate rowSelection
+  // rowSelection: 'multiple', (removed duplicate)
   domLayout: 'normal',
   rowHeight: props.content?.rowHeight || 25,
+  // Critical for deployed environments - prevent editing from being cancelled
+  suppressClickEdit: false,
+  suppressCellFocus: false,
+  enableCellTextSelection: true,
+  ensureDomOrder: true,
+  // Prevent outside clicks from cancelling edit
+  stopEditingWhenGridLosesFocus: false,
   onGridReady: (params) => {
   gridApi = params.api;
   gridColumnApi = params.columnApi;
@@ -682,9 +713,20 @@
   });
   
   onBeforeUnmount(() => {
+    // Remove the click event listener we added for editing
+    document.removeEventListener('click', preventClickPropagation, true);
+    
     if (gridApi) {
+      // Ensure any active editing is completed before destroying
+      try {
+        gridApi.stopEditing();
+      } catch (e) {
+        console.warn('Error stopping editing:', e);
+      }
+      
       gridApi.destroy();
       gridApi = null;
+      gridColumnApi = null;
     }
 
     // Clean up instance flag
