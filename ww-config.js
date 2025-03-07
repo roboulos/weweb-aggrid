@@ -445,6 +445,19 @@ export default {
       },
       propertyHelp: { tooltip: 'Customize the loading message shown during updates' }
     },
+    // Show version display in the component
+    showVersion: {
+      label: { en: 'Show Version Number' },
+      type: 'OnOff',
+      section: 'settings',
+      bindable: true,
+      defaultValue: true,
+      bindingValidation: {
+        type: 'boolean',
+        tooltip: 'Show or hide the component version number'
+      },
+      propertyHelp: { tooltip: 'Display the component version number in the top-right corner' }
+    },
     // NEW: Auto Size Columns flag: if true, auto-size columns on grid ready.
     autoSizeColumns: {
       label: { en: 'Auto Size Columns' },

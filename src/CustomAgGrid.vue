@@ -3,6 +3,9 @@
     fontFamily: content?.fontFamily || 'Arial, sans-serif',
     height: '500px'
   }">
+    <!-- Version Display -->
+    <div class="version-display" v-if="content?.showVersion !== false">v1.3.1</div>
+    
     <!-- Grid Controls -->
     <div class="grid-controls" v-if="content?.enableQuickFilter || content?.enablePresetFilters">
       <!-- Quick Filter -->
@@ -992,6 +995,19 @@
     border-radius: 4px;
     box-sizing: border-box;
     height: 500px;
+    
+  .version-display {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #f5f5f5;
+    color: #666;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 0 0 0 4px;
+    opacity: 0.7;
+    z-index: 10;
+  }
   
   .ag-grid-container {
     width: 100%;

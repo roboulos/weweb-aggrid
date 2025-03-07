@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.3.1 (2025-03-07)
+
+### Bug Fixes
+
+1. **Quick Filter Functionality**
+   - Fixed issue where table-wide search was not responding to user input
+   - Added improved error handling and logging for filter operations
+   - Ensured proper initialization of the quick filter when the grid loads
+   - Added event tracking to better diagnose input-related issues
+
+2. **Preset Filter Buttons**
+   - Fixed issue where preset filter buttons were not applying filters when clicked
+   - Implemented fallback mechanism when filter instances aren't found
+   - Added direct filter model application as an alternative approach
+   - Enhanced error reporting for easier troubleshooting
+
+3. **General Improvements**
+   - Added reset of filter state during grid initialization
+   - Improved lifecycle management for filter operations
+   - Enhanced debugging capabilities with detailed console logging
+
 ## v1.3.0 (2025-03-07)
 
 ### Features Added
