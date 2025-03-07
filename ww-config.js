@@ -253,6 +253,123 @@ export default {
       },
       propertyHelp: { tooltip: 'Additional headers for Xano API calls (e.g., authorization)' }
     },
+    // Advanced features
+    enableTreeData: {
+      label: { en: 'Enable Tree Data' },
+      type: 'OnOff',
+      section: 'settings',
+      bindable: true,
+      defaultValue: false,
+      propertyHelp: { tooltip: 'Enable hierarchical/nested data display' }
+    },
+    treeDataParentField: {
+      label: { en: 'Parent ID Field' },
+      type: 'Text',
+      section: 'settings',
+      bindable: true,
+      defaultValue: 'parentId',
+      propertyHelp: { tooltip: 'Field name containing the parent ID for tree data' },
+      hidden: content => !content.enableTreeData
+    },
+    treeDataChildField: {
+      label: { en: 'Child Field' },
+      type: 'Text',
+      section: 'settings',
+      bindable: true,
+      defaultValue: 'children',
+      propertyHelp: { tooltip: 'Field name for child nodes in tree data' },
+      hidden: content => !content.enableTreeData
+    },
+    enableMasterDetail: {
+      label: { en: 'Enable Master-Detail View' },
+      type: 'OnOff',
+      section: 'settings',
+      bindable: true,
+      defaultValue: false,
+      propertyHelp: { tooltip: 'Enable expandable detail rows' }
+    },
+    detailCellRenderer: {
+      label: { en: 'Detail Cell Template' },
+      type: 'Text',
+      section: 'settings',
+      bindable: true,
+      defaultValue: '<div class="detail-cell">\n  <h3>{{data.name}}</h3>\n  <p>{{data.description}}</p>\n</div>',
+      options: {
+        type: 'code',
+        language: 'html'
+      },
+      propertyHelp: { tooltip: 'HTML template for detail cells. Use {{data.fieldName}} for data binding.' },
+      hidden: content => !content.enableMasterDetail
+    },
+    enableQuickFilter: {
+      label: { en: 'Enable Quick Filter' },
+      type: 'OnOff',
+      section: 'settings',
+      bindable: true,
+      defaultValue: false,
+      propertyHelp: { tooltip: 'Show a search box for filtering across all columns' }
+    },
+    quickFilterPlaceholder: {
+      label: { en: 'Quick Filter Placeholder' },
+      type: 'Text',
+      section: 'settings',
+      bindable: true,
+      defaultValue: 'Search...',
+      propertyHelp: { tooltip: 'Placeholder text for the quick filter input' },
+      hidden: content => !content.enableQuickFilter
+    },
+    enablePresetFilters: {
+      label: { en: 'Enable Preset Filters' },
+      type: 'OnOff',
+      section: 'settings',
+      bindable: true,
+      defaultValue: false,
+      propertyHelp: { tooltip: 'Show preset filter buttons above the grid' }
+    },
+    presetFilters: {
+      label: { en: 'Preset Filters' },
+      type: 'Array',
+      section: 'settings',
+      bindable: true,
+      defaultValue: [],
+      options: {
+        expandable: true,
+        getItemLabel(item, index) { return item.label || `Filter ${index + 1}`; },
+        item: {
+          type: 'Object',
+          defaultValue: {
+            label: 'Active',
+            field: 'status',
+            value: 'active',
+            operator: 'equals',
+            color: '#1a73e8'
+          },
+          options: {
+            item: {
+              label: { label: 'Label', type: 'Text' },
+              field: { label: 'Field', type: 'Text' },
+              value: { label: 'Value', type: 'Text' },
+              operator: { 
+                label: 'Operator', 
+                type: 'TextSelect',
+                options: {
+                  options: [
+                    { value: 'equals', label: 'Equals' },
+                    { value: 'notEqual', label: 'Not Equal' },
+                    { value: 'contains', label: 'Contains' },
+                    { value: 'greaterThan', label: 'Greater Than' },
+                    { value: 'lessThan', label: 'Less Than' }
+                  ]
+                }
+              },
+              color: { label: 'Button Color', type: 'Color' }
+            }
+          }
+        }
+      },
+      propertyHelp: { tooltip: 'Define preset filter buttons to quickly filter data' },
+      hidden: content => !content.enablePresetFilters
+    },
     // Display settings
     fontFamily: {
       label: { en: 'Grid Font Family' },

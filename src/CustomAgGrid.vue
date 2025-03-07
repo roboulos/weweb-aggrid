@@ -3,6 +3,48 @@
     fontFamily: content?.fontFamily || 'Arial, sans-serif',
     height: '500px'
   }">
+    <!-- Grid Controls -->
+    <div class="grid-controls" v-if="content?.enableQuickFilter || content?.enablePresetFilters">
+      <!-- Quick Filter -->
+      <div class="quick-filter-container" v-if="content?.enableQuickFilter">
+        <input 
+          type="text" 
+          class="quick-filter-input"
+          v-model="quickFilterText"
+          :placeholder="content?.quickFilterPlaceholder || 'Search...'"
+        />
+        <button 
+          v-if="quickFilterText" 
+          class="clear-filter-button"
+          @click="clearQuickFilter"
+        >
+          ×
+        </button>
+      </div>
+      
+      <!-- Preset Filters -->
+      <div class="preset-filters-container" v-if="content?.enablePresetFilters && content?.presetFilters?.length">
+        <button 
+          v-for="(filter, index) in content.presetFilters" 
+          :key="index"
+          class="preset-filter-button"
+          :class="{ 'active': activePresetFilter === index }"
+          :style="{ backgroundColor: filter.color || '#1a73e8', borderColor: filter.color || '#1a73e8' }"
+          @click="applyPresetFilter(filter, index)"
+        >
+          {{ filter.label }}
+        </button>
+        <button 
+          v-if="activePresetFilter !== null" 
+          class="clear-filters-button"
+          @click="clearPresetFilters"
+        >
+          Clear Filters
+        </button>
+      </div>
+    </div>
+    
+    <!-- Main Grid -->
     <div 
       ref="agGridElement"
       class="ag-grid-container"
@@ -17,6 +59,8 @@
         </div>
       </transition>
     </div>
+    
+    <!-- Add Row Button -->
     <div v-if="content?.showAddRowButton" class="add-row-button">
       <button @click="addNewRow">+ Add Row</button>
     </div>
@@ -42,6 +86,68 @@
   let gridApi = null;
   let gridColumnApi = null;
   let isUpdating = false;
+  
+  // State for quick filter and preset filters
+  const quickFilterText = ref('');
+  const activePresetFilter = ref(null);
+  
+  // Quick filter methods
+  function clearQuickFilter() {
+    quickFilterText.value = '';
+    if (gridApi) {
+      gridApi.setQuickFilter('');
+      
+      // Emit filter cleared event
+      emit('trigger-event', {
+        name: 'quickFilterCleared',
+        event: {}
+      });
+    }
+  }
+  
+  // Preset filter methods
+  function applyPresetFilter(filter, index) {
+    if (!gridApi) return;
+    
+    // If clicking the active filter, clear it
+    if (activePresetFilter.value === index) {
+      clearPresetFilters();
+      return;
+    }
+    
+    // Clear any existing filters
+    gridApi.setFilterModel(null);
+    
+    // Apply the new filter
+    const filterInstance = gridApi.getFilterInstance(filter.field);
+    if (filterInstance) {
+      filterInstance.setModel({
+        type: filter.operator || 'equals',
+        filter: filter.value
+      });
+      gridApi.onFilterChanged();
+      activePresetFilter.value = index;
+      
+      // Emit filter applied event
+      emit('trigger-event', {
+        name: 'presetFilterApplied',
+        event: { filter: filter.label, field: filter.field, value: filter.value }
+      });
+    }
+  }
+  
+  function clearPresetFilters() {
+    if (gridApi) {
+      gridApi.setFilterModel(null);
+      activePresetFilter.value = null;
+      
+      // Emit filter cleared event
+      emit('trigger-event', {
+        name: 'presetFilterCleared',
+        event: {}
+      });
+    }
+  }
   
   // Grid state management
   const { value: gridState, setValue: setGridState } = (typeof wwLib !== 'undefined' ? wwLib.wwVariable.useComponentVariable({
@@ -459,6 +565,23 @@
     });
     return rules;
   };
+  
+  // Create detail cell renderer for master-detail view
+  const createDetailCellRenderer = () => {
+    if (!props.content?.enableMasterDetail) return null;
+    
+    return (params) => {
+      const template = props.content?.detailCellRenderer || '<div class="detail-cell">Detail view</div>';
+      // Replace {{data.fieldName}} with actual data
+      const renderedTemplate = template.replace(/\{\{data\.(\w+)\}\}/g, (match, field) => {
+        return params.data[field] !== undefined ? params.data[field] : '';
+      });
+      
+      const div = document.createElement('div');
+      div.innerHTML = renderedTemplate;
+      return div;
+    };
+  };
 
   const gridOptions = props.content?.advancedMode ? {
       // Base options
@@ -510,7 +633,7 @@
     // Ensure editors stay focused
     stopEditingWhenCellsLoseFocus: false
   },
-  rowSelection: 'multiple',
+  rowSelection: props.content?.rowSelectionMode || 'multiple',
   rowMultiSelectWithClick: true,
   rowClassRules: getRowClassRules(),
   rowHeight: props.content?.rowHeight || 40,
@@ -519,6 +642,26 @@
   paginationPageSize: props.content?.pageSize || 10,
   suppressPaginationPanel: false,
   rowData: ensureValidData(props.content?.tableData),
+  
+  // Tree data configuration
+  treeData: props.content?.enableTreeData || false,
+  autoGroupColumnDef: props.content?.enableTreeData ? {
+    headerName: 'Group',
+    minWidth: 200,
+    cellRendererParams: {
+      suppressCount: false,
+    },
+  } : undefined,
+  getDataPath: props.content?.enableTreeData ? (data) => {
+    // Use a path based on the configured child field
+    const childField = props.content?.treeDataChildField || 'children';
+    return data[childField] ? data[childField].split('/') : [];
+  } : undefined,
+  
+  // Master-detail configuration
+  masterDetail: props.content?.enableMasterDetail || false,
+  detailCellRenderer: props.content?.enableMasterDetail ? createDetailCellRenderer() : undefined,
+  detailRowHeight: 200,
   // Prevent duplicate pagination options
   // pagination: true, (removed duplicate)
   // paginationPageSize: props.content?.pageSize || 25, (removed duplicate)
@@ -534,11 +677,24 @@
   // Prevent outside clicks from cancelling edit
   stopEditingWhenGridLosesFocus: false,
   onGridReady: (params) => {
-  gridApi = params.api;
-  gridColumnApi = params.columnApi;
-  if (props.content?.autoSizeColumns) {
-  params.api.sizeColumnsToFit();
-  }
+    gridApi = params.api;
+    gridColumnApi = params.columnApi;
+    
+    // Apply any existing quick filter
+    if (quickFilterText.value) {
+      gridApi.setQuickFilter(quickFilterText.value);
+    }
+    
+    // Auto-size columns if enabled
+    if (props.content?.autoSizeColumns) {
+      params.api.sizeColumnsToFit();
+    }
+    
+    // Emit grid ready event
+    emit('trigger-event', {
+      name: 'gridReady',
+      event: { }
+    });
   },
   onCellValueChanged: handleCellValueChanged,
   onRowSelected: (event) => {
@@ -632,6 +788,19 @@
     if (gridApi && !isUpdating) {
       console.log('Updating column definitions:', newDefs);
       gridApi.setColumnDefs(newDefs || []);
+    }
+  });
+  
+  // Watch for changes to quick filter text
+  watch(quickFilterText, (newValue) => {
+    if (gridApi) {
+      gridApi.setQuickFilter(newValue);
+      
+      // Emit filter applied event
+      emit('trigger-event', {
+        name: 'quickFilterApplied',
+        event: { filterText: newValue }
+      });
     }
   }, { deep: true, immediate: true });
   
@@ -853,6 +1022,114 @@
     transition: background-color 0.2s;
     &:hover {
       background-color: #f5f5f5;
+    }
+  }
+  
+  // Grid controls for filters
+  .grid-controls {
+    padding: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    background: #f5f5f5;
+    
+    .quick-filter-container {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+      
+      .quick-filter-input {
+        width: 100%;
+        padding: 8px 30px 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        
+        &:focus {
+          outline: none;
+          border-color: #1a73e8;
+          box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+      }
+      
+      .clear-filter-button {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #666;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+        
+        &:hover {
+          color: #333;
+        }
+      }
+    }
+    
+    .preset-filters-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      
+      .preset-filter-button {
+        padding: 6px 12px;
+        border-radius: 4px;
+        background-color: #1a73e8;
+        color: white;
+        border: 1px solid #1a73e8;
+        cursor: pointer;
+        font-size: 13px;
+        transition: opacity 0.2s;
+        
+        &:hover {
+          opacity: 0.9;
+        }
+        
+        &.active {
+          box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+      }
+      
+      .clear-filters-button {
+        padding: 6px 12px;
+        border-radius: 4px;
+        background-color: #f5f5f5;
+        color: #333;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        font-size: 13px;
+        
+        &:hover {
+          background-color: #e5e5e5;
+        }
+      }
+    }
+  }
+  
+  // Detail cell styling
+  :deep(.detail-cell) {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    margin: 10px;
+    
+    h3 {
+      margin-top: 0;
+      color: #333;
+      font-size: 16px;
+    }
+    
+    p {
+      margin-bottom: 0;
+      color: #666;
+      font-size: 14px;
     }
   }
   
