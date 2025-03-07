@@ -12,6 +12,7 @@
           class="quick-filter-input"
           v-model="quickFilterText"
           :placeholder="content?.quickFilterPlaceholder || 'Search...'"
+          @input="e => { console.log('Quick filter input:', e.target.value); }"
         />
         <button 
           v-if="quickFilterText" 
@@ -107,7 +108,11 @@
   
   // Preset filter methods
   function applyPresetFilter(filter, index) {
-    if (!gridApi) return;
+    console.log('Applying preset filter:', filter, 'at index:', index);
+    if (!gridApi) {
+      console.warn('Grid API not available for preset filter');
+      return;
+    }
     
     // If clicking the active filter, clear it
     if (activePresetFilter.value === index) {
@@ -120,15 +125,36 @@
     
     // Apply the new filter
     const filterInstance = gridApi.getFilterInstance(filter.field);
+    console.log('Filter instance for field', filter.field, ':', filterInstance);
+    
     if (filterInstance) {
-      filterInstance.setModel({
+      const filterModel = {
         type: filter.operator || 'equals',
         filter: filter.value
-      });
+      };
+      console.log('Setting filter model:', filterModel);
+      filterInstance.setModel(filterModel);
       gridApi.onFilterChanged();
       activePresetFilter.value = index;
       
       // Emit filter applied event
+      emit('trigger-event', {
+        name: 'presetFilterApplied',
+        event: { filter: filter.label, field: filter.field, value: filter.value }
+      });
+    } else {
+      console.warn('Could not find filter instance for field:', filter.field);
+      // Try applying filter directly through API as fallback
+      const filterModel = {};
+      filterModel[filter.field] = {
+        type: filter.operator || 'equals',
+        filter: filter.value
+      };
+      console.log('Applying filter model directly:', filterModel);
+      gridApi.setFilterModel(filterModel);
+      gridApi.onFilterChanged();
+      activePresetFilter.value = index;
+      
       emit('trigger-event', {
         name: 'presetFilterApplied',
         event: { filter: filter.label, field: filter.field, value: filter.value }
@@ -511,6 +537,10 @@
       console.warn('AG Grid or element not ready, waiting...');
       return;
     }
+    
+    // Reset filter state
+    quickFilterText.value = '';
+    activePresetFilter.value = null;
   
   try {
     console.log('Initializing grid with mode:', props.content?.advancedMode ? 'advanced' : 'basic');
@@ -794,6 +824,7 @@
   // Watch for changes to quick filter text
   watch(quickFilterText, (newValue) => {
     if (gridApi) {
+      console.log('Setting quick filter:', newValue);
       gridApi.setQuickFilter(newValue);
       
       // Emit filter applied event
@@ -801,8 +832,10 @@
         name: 'quickFilterApplied',
         event: { filterText: newValue }
       });
+    } else {
+      console.warn('Grid API not available for quick filter');
     }
-  }, { deep: true, immediate: true });
+  });
   
   // Add new row functionality
   const addNewRow = async () => {
@@ -887,6 +920,12 @@
         const validData = ensureValidData(props.content?.tableData);
         console.log('Processed initial data:', validData);
         gridApi.setRowData(validData);
+        
+        // Apply any initial quick filter
+        if (quickFilterText.value) {
+          console.log('Applying initial quick filter:', quickFilterText.value);
+          gridApi.setQuickFilter(quickFilterText.value);
+        }
       }
     } catch (error) {
       console.error('Failed to initialize grid:', error);
