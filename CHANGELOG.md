@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.3.0 (2025-03-07)
+
+### Features Added
+
+1. **Nested Rows (Tree Data)**
+   - Added configuration options for enabling hierarchical data display
+   - Implemented parent-child relationship support with configurable field names
+   - Added automatic grouping and expansion of nested rows
+   - Optimized for both flat data with parent references and hierarchical data structures
+
+2. **Table-Wide Search (Quick Filter)**
+   - Added a search box above the grid for filtering across all columns
+   - Implemented real-time filtering as users type
+   - Added clear button for resetting filters
+   - Added 'quickFilterApplied' and 'quickFilterCleared' events
+
+3. **Preset Filters**
+   - Added configurable filter buttons that can be placed above the grid
+   - Support for different filter operators (equals, contains, greater than, etc.)
+   - Visual indication of active filters with customizable colors
+   - Added 'presetFilterApplied' and 'presetFilterCleared' events
+
+4. **Master-Detail View**
+   - Added support for expandable detail rows to display additional information
+   - Implemented customizable HTML templates for detail cells
+   - Added data binding with {{data.fieldName}} syntax for dynamic content
+   - Optimized styling for better readability and user experience
+
 ## v1.2.0 (2025-02-27)
 
 ### Features Added
