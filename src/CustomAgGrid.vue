@@ -4,7 +4,7 @@
     height: '500px'
   }">
     <!-- Version Display -->
-    <div class="version-display" v-if="content?.showVersion !== false">v1.3.1</div>
+    <div class="version-display" v-if="content?.showVersion !== false">v1.3.2</div>
     
     <!-- Grid Controls -->
     <div class="grid-controls" v-if="content?.enableQuickFilter || content?.enablePresetFilters">
@@ -297,8 +297,14 @@
   
   // Transform column definitions with proper data handling
   function transformColumnDefs(columnDefs) {
+    if (!columnDefs || !Array.isArray(columnDefs)) {
+      console.warn('Invalid column definitions:', columnDefs);
+      return [];
+    }
+    
     return columnDefs.map(col => {
-      const column = { ...col };
+      // Create a deep copy to avoid mutation issues
+      const column = JSON.parse(JSON.stringify(col));
 
       // Handle text wrapping
       if (column.wrapText) {
@@ -544,6 +550,9 @@
       return;
     }
     
+    // Store the original column definitions to ensure we can reapply formatting
+    window[`ag-grid-columns-${props.uid}`] = props.content?.columnDefs || [];
+    
     // Reset filter state
     quickFilterText.value = '';
     activePresetFilter.value = null;
@@ -653,6 +662,7 @@
         }
       }
     } : {
+  // Always transform column definitions to ensure dataType formatting is preserved
   columnDefs: transformColumnDefs(props.content?.columnDefs || []),
   defaultColDef: {
     editable: true,
@@ -823,9 +833,11 @@
   watch(() => props.content?.columnDefs, (newDefs) => {
     if (gridApi && !isUpdating) {
       console.log('Updating column definitions:', newDefs);
-      gridApi.setColumnDefs(newDefs || []);
+      // Always transform column definitions to ensure dataType formatting is preserved
+      const transformedDefs = transformColumnDefs(newDefs || []);
+      gridApi.setColumnDefs(transformedDefs);
     }
-  });
+  }, { deep: true });
   
   // Direct method to apply quick filter
   function applyQuickFilter(value) {
@@ -919,6 +931,26 @@
     }
   };
 
+  // Pagination page size change handler
+  const onPaginationChanged = () => {
+    if (gridApi) {
+      const paginationProxy = gridApi.paginationGetPageSize();
+      
+      // When pagination changes, ensure column formatting is preserved
+      const currentColumnDefs = gridApi.getColumnDefs();
+      const originalColumnDefs = window[`ag-grid-columns-${props.uid}`] || props.content?.columnDefs || [];
+      
+      // Reapply transformations to ensure dataType formatting is preserved
+      const transformedDefs = transformColumnDefs(originalColumnDefs);
+      gridApi.setColumnDefs(transformedDefs);
+      
+      emit('trigger-event', {
+        name: 'paginationChanged',
+        event: { pageSize: paginationProxy }
+      });
+    }
+  };
+
   // Component lifecycle
   onMounted(async () => {
     try {
@@ -937,6 +969,9 @@
           console.log('Applying initial quick filter:', quickFilterText.value);
           gridApi.setQuickFilter(quickFilterText.value);
         }
+        
+        // Add event listener for pagination changes to ensure formatting is preserved
+        gridApi.addEventListener('paginationChanged', onPaginationChanged);
       }
     } catch (error) {
       console.error('Failed to initialize grid:', error);
@@ -964,10 +999,15 @@
       gridColumnApi = null;
     }
 
-    // Clean up instance flag
+    // Clean up instance flags
     const instanceId = `ag-grid-${props.uid}`;
     if (window[instanceId]) {
       delete window[instanceId];
+    }
+    
+    // Clean up stored column definitions
+    if (window[`ag-grid-columns-${props.uid}`]) {
+      delete window[`ag-grid-columns-${props.uid}`];
     }
 
     // Only remove resources if this is the last AG Grid instance

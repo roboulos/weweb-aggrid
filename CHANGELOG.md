@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.2 (2025-03-08)
+
+### Bug Fixes
+
+1. **DataType Formatting Persistence**
+   - Fixed critical issue where dataType formatting wasn't persisting when changing page size or making edits
+   - Added robust mechanism to preserve column formatting across all grid operations
+   - Implemented deep copying of column definitions to prevent mutation issues
+   - Added pagination change event handler to reapply formatting when needed
+   - Improved cleanup of resources to prevent memory leaks
+   - Fixed formatting in deployed environments to ensure consistent behavior
+
 ## v1.3.1 (2025-03-07)
 
 ### Bug Fixes
