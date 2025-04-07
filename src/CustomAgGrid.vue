@@ -1,7 +1,7 @@
 <template>
   <div class="ag-grid-wrapper" :style="{ 
     fontFamily: content?.fontFamily || 'Arial, sans-serif',
-    height: '500px'
+    height: content?.height || '500px'
   }">
     <!-- Version Display -->
     <div class="version-display" v-if="content?.showVersion !== false">v1.3.2</div>
@@ -108,9 +108,13 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { debounce } from 'lodash';
 import { AgGridVue } from 'ag-grid-vue3';
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
   
-  export default {
-    name: "CustomAgGrid",
+  // Register AG Grid modules globally
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+export default {
+    name: "wwElement:CustomAgGrid",
     components: {
       AgGridVue
     },
@@ -225,8 +229,18 @@ import { AgGridVue } from 'ag-grid-vue3';
   cssLoaded: false,
   filterModel: null,
   sortModel: null
-  }
+  },
+  readonly: true
   }) : { value: {}, setValue: () => {} });
+  
+  // Selected rows state for external access
+  const { value: selectedRows, setValue: setSelectedRows } = (typeof wwLib !== 'undefined' ? wwLib.wwVariable.useComponentVariable({
+  uid: props.uid,
+  name: 'selectedRows',
+  type: 'array',
+  defaultValue: [],
+  readonly: true
+  }) : { value: [], setValue: () => {} });
   
   // Compute theme class
   const gridThemeClass = computed(() => `ag-theme-${props.content?.theme || 'quartz'}`);
@@ -280,6 +294,11 @@ import { AgGridVue } from 'ag-grid-vue3';
         document.addEventListener('click', preventClickPropagation, true);
         
         setGridState({ ...gridState.value, scriptLoaded: true, cssLoaded: true });
+      }
+      
+      // Ensure ModuleRegistry is properly initialized
+      if (!ModuleRegistry.isRegistered(AllCommunityModule)) {
+        ModuleRegistry.registerModules([AllCommunityModule]);
       }
     } catch (error) {
       console.error('Failed to load AG Grid resources:', error);
@@ -773,13 +792,19 @@ async function initializeAgGrid() {
     if (event.node.isSelected()) {
       emit('trigger-event', {
         name: 'rowSelected',
-        event: { rowData: event.data }
+        event: { row: event.data }
       });
     } else {
       emit('trigger-event', {
         name: 'rowDeselected',
-        event: { rowData: event.data }
+        event: { row: event.data }
       });
+    }
+    
+    // Update selected rows state when selection changes
+    if (gridApi) {
+      const selected = gridApi.getSelectedRows() || [];
+      setSelectedRows(selected);
     }
   }
   };
@@ -985,6 +1010,15 @@ async function initializeAgGrid() {
       
       // The grid initialization is now handled by the AgGridVue component
       // We'll still need to set up any additional event listeners after grid-ready event
+      
+      // Log initialization for debugging
+      console.log('AG Grid component mounted successfully');
+      
+      // Emit component ready event
+      emit('trigger-event', {
+        name: 'componentReady',
+        event: { }
+      });
     } catch (error) {
       console.error('Failed to initialize grid:', error);
       emit('trigger-event', {
