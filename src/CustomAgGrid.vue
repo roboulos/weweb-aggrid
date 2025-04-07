@@ -108,9 +108,10 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { debounce } from 'lodash';
 import { AgGridVue } from 'ag-grid-vue3';
-import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
   
-  // We'll let AG Grid Vue handle module registration to avoid conflicts
+// Register required modules
+ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
 export default {
     name: "wwElement:CustomAgGrid",
@@ -266,35 +267,32 @@ export default {
         window[instanceId] = true;
 
         // Check if document and head are available (safety check)
-        if (typeof document === 'undefined' || !document.head) {
+        const doc = typeof document !== 'undefined' ? document : wwLib.getFrontDocument();
+        if (!doc || !doc.head) {
           console.warn('Document or document.head not available');
           return;
         }
 
-        // Load CSS files if not already loaded - append to document.head instead
+        // Load CSS files if not already loaded
         const cssFiles = [
           'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css',
           `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${props.content?.theme || 'quartz'}.css`
         ];
 
         for (const href of cssFiles) {
-          if (!document.querySelector(`link[href="${href}"]`)) {
-            const link = document.createElement('link');
+          if (!doc.querySelector(`link[href="${href}"]`)) {
+            const link = doc.createElement('link');
             link.rel = 'stylesheet';
             link.href = href;
-            document.head.appendChild(link);
+            doc.head.appendChild(link);
           }
         }
 
         // Add event listener to prevent clicks from bubbling outside the grid
-        // This is crucial for editing in deployed environments
-        document.addEventListener('click', preventClickPropagation, true);
+        doc.addEventListener('click', preventClickPropagation, true);
         
         setGridState({ ...gridState.value, scriptLoaded: true, cssLoaded: true });
       }
-      
-      // Don't register modules globally to avoid conflicts with other components
-      // Let AG Grid Vue handle the module registration internally
     } catch (error) {
       console.error('Failed to load AG Grid resources:', error);
       emit('trigger-event', {
@@ -763,6 +761,9 @@ async function initializeAgGrid() {
     gridApi = params.api;
     gridColumnApi = params.columnApi;
     
+    // Store the original column definitions to ensure we can reapply formatting
+    window[`ag-grid-columns-${props.uid}`] = JSON.parse(JSON.stringify(props.content?.columnDefs || []));
+    
     // Apply any existing quick filter
     if (quickFilterText.value) {
       gridApi.setQuickFilter(quickFilterText.value);
@@ -983,12 +984,13 @@ async function initializeAgGrid() {
       const paginationProxy = gridApi.paginationGetPageSize();
       
       // When pagination changes, ensure column formatting is preserved
-      const currentColumnDefs = gridApi.getColumnDefs();
-      const originalColumnDefs = window[`ag-grid-columns-${props.uid}`] || props.content?.columnDefs || [];
+      const originalColumnDefs = window[`ag-grid-columns-${props.uid}`] || [];
       
-      // Reapply transformations to ensure dataType formatting is preserved
-      const transformedDefs = transformColumnDefs(originalColumnDefs);
-      gridApi.setColumnDefs(transformedDefs);
+      if (originalColumnDefs.length > 0) {
+        // Create a deep copy to avoid mutation issues
+        const transformedDefs = transformColumnDefs(JSON.parse(JSON.stringify(originalColumnDefs)));
+        gridApi.setColumnDefs(transformedDefs);
+      }
       
       emit('trigger-event', {
         name: 'paginationChanged',
@@ -1025,7 +1027,10 @@ async function initializeAgGrid() {
   
   onBeforeUnmount(() => {
     // Remove the click event listener we added for editing
-    document.removeEventListener('click', preventClickPropagation, true);
+    const doc = typeof document !== 'undefined' ? document : wwLib.getFrontDocument();
+    if (doc) {
+      doc.removeEventListener('click', preventClickPropagation, true);
+    }
     
     if (gridApi) {
       // Ensure any active editing is completed before destroying
