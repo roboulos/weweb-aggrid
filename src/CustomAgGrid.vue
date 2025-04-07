@@ -53,11 +53,41 @@
     
     <!-- Main Grid -->
     <div 
-      ref="agGridElement"
       class="ag-grid-container"
-      :class="[gridThemeClass, { 'is-loading': gridState.isLoading }]"
+      :class="{ 'is-loading': gridState.isLoading }"
       :style="gridCustomStyles"
     >
+      <ag-grid-vue
+        ref="agGridRef"
+        :class="gridThemeClass"
+        :columnDefs="columnDefs"
+        :rowData="rowData"
+        :defaultColDef="defaultColDef"
+        :rowSelection="content?.rowSelectionMode || 'multiple'"
+        :rowMultiSelectWithClick="true"
+        :rowClassRules="rowClassRules"
+        :rowHeight="content?.rowHeight || 40"
+        :headerHeight="content?.headerHeight || 40"
+        :pagination="true"
+        :paginationPageSize="content?.pageSize || 10"
+        :suppressPaginationPanel="false"
+        :treeData="content?.enableTreeData || false"
+        :autoGroupColumnDef="treeDataColumnDef"
+        :getDataPath="getDataPath"
+        :masterDetail="content?.enableMasterDetail || false"
+        :detailCellRenderer="detailCellRenderer"
+        :detailRowHeight="200"
+        :domLayout="'normal'"
+        :suppressClickEdit="false"
+        :suppressCellFocus="false"
+        :enableCellTextSelection="true"
+        :ensureDomOrder="true"
+        :stopEditingWhenGridLosesFocus="false"
+        @grid-ready="onGridReady"
+        @cell-value-changed="handleCellValueChanged"
+        @row-selected="onRowSelected"
+      >
+      </ag-grid-vue>
       <transition name="fade">
         <div v-if="gridState.isLoading" class="loading-overlay">
           <div class="loading-content">
@@ -75,11 +105,15 @@
 </template>
   
   <script>
-  import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-  import { debounce } from 'lodash';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { debounce } from 'lodash';
+import { AgGridVue } from 'ag-grid-vue3';
   
   export default {
     name: "CustomAgGrid",
+    components: {
+      AgGridVue
+    },
     props: {
       content: { type: Object, required: true },
       uid: { type: String, required: true },
@@ -89,7 +123,7 @@
     },
   emits: ['trigger-event'],
   setup(props, { emit }) {
-  const agGridElement = ref(null);
+  const agGridRef = ref(null);
   let gridApi = null;
   let gridColumnApi = null;
   let isUpdating = false;
@@ -225,17 +259,6 @@
           document.body.appendChild(container);
           return container;
         })();
-
-        // Load AG Grid script if not already loaded
-        if (!window.agGrid) {
-          await new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js';
-            script.onload = resolve;
-            script.onerror = reject;
-            resourceContainer.appendChild(script);
-          });
-        }
 
         // Load CSS files if not already loaded
         const cssFiles = [
@@ -543,12 +566,12 @@
   }
 
   // Initialize grid with proper error handling
-  async function initializeAgGrid() {
-    console.log('Initializing AG Grid with content:', props.content);
-    if (!window.agGrid || !agGridElement.value) {
-      console.warn('AG Grid or element not ready, waiting...');
-      return;
-    }
+async function initializeAgGrid() {
+  console.log('Initializing AG Grid with content:', props.content);
+  if (!agGridRef.value) {
+    console.warn('AG Grid component not ready, waiting...');
+    return;
+  }
     
     // Store the original column definitions to ensure we can reapply formatting
     window[`ag-grid-columns-${props.uid}`] = props.content?.columnDefs || [];
@@ -736,6 +759,9 @@
       params.api.sizeColumnsToFit();
     }
     
+    // Add event listener for pagination changes to ensure formatting is preserved
+    gridApi.addEventListener('paginationChanged', onPaginationChanged);
+    
     // Emit grid ready event
     emit('trigger-event', {
       name: 'gridReady',
@@ -758,7 +784,7 @@
   }
   };
   
-  new window.agGrid.Grid(agGridElement.value, gridOptions);
+  // Grid initialization is now handled by the AgGridVue component
   } catch (error) {
   console.error('Failed to initialize grid:', error);
   emit('trigger-event', {
@@ -954,25 +980,11 @@
   // Component lifecycle
   onMounted(async () => {
     try {
+      // Load AG Grid resources dynamically
       await loadAgGridResources();
-      await initializeAgGrid();
       
-      // Ensure data is set after grid is initialized
-      if (gridApi) {
-        console.log('Setting initial data:', props.content?.tableData);
-        const validData = ensureValidData(props.content?.tableData);
-        console.log('Processed initial data:', validData);
-        gridApi.setRowData(validData);
-        
-        // Apply any initial quick filter
-        if (quickFilterText.value) {
-          console.log('Applying initial quick filter:', quickFilterText.value);
-          gridApi.setQuickFilter(quickFilterText.value);
-        }
-        
-        // Add event listener for pagination changes to ensure formatting is preserved
-        gridApi.addEventListener('paginationChanged', onPaginationChanged);
-      }
+      // The grid initialization is now handled by the AgGridVue component
+      // We'll still need to set up any additional event listeners after grid-ready event
     } catch (error) {
       console.error('Failed to initialize grid:', error);
       emit('trigger-event', {
@@ -1020,8 +1032,68 @@
     }
   });
   
+  // Computed properties for the grid
+  const rowData = computed(() => ensureValidData(props.content?.tableData));
+  
+  const columnDefs = computed(() => transformColumnDefs(props.content?.columnDefs || []));
+  
+  const defaultColDef = computed(() => ({
+    editable: true,
+    sortable: props.content?.enableSorting ?? true,
+    filter: props.content?.enableFiltering ?? true,
+    resizable: true,
+    minWidth: 150,
+    checkboxSelection: col => col.field === (props.content?.checkboxSelectionField || '_checkbox'),
+    headerCheckboxSelection: col => col.field === (props.content?.checkboxSelectionField || '_checkbox'),
+    cellClassRules: {
+      'ag-cell-editing': params => params.node.editing,
+    },
+    stopEditingWhenCellsLoseFocus: false
+  }));
+  
+  const rowClassRules = computed(() => {
+    const rules = {};
+    props.content?.columnDefs?.forEach(col => {
+      if (col.rowClassRules) {
+        Object.assign(rules, col.rowClassRules);
+      }
+    });
+    return rules;
+  });
+  
+  const treeDataColumnDef = computed(() => props.content?.enableTreeData ? {
+    headerName: 'Group',
+    minWidth: 200,
+    cellRendererParams: {
+      suppressCount: false,
+    },
+  } : undefined);
+  
+  const getDataPath = (data) => {
+    if (!props.content?.enableTreeData) return [];
+    // Use a path based on the configured child field
+    const childField = props.content?.treeDataChildField || 'children';
+    return data[childField] ? data[childField].split('/') : [];
+  };
+  
+  const detailCellRenderer = computed(() => {
+    if (!props.content?.enableMasterDetail) return null;
+    
+    return (params) => {
+      const template = props.content?.detailCellRenderer || '<div class="detail-cell">Detail view</div>';
+      // Replace {{data.fieldName}} with actual data
+      const renderedTemplate = template.replace(/\{\{data\.(\w+)\}\}/g, (match, field) => {
+        return params.data[field] !== undefined ? params.data[field] : '';
+      });
+      
+      const div = document.createElement('div');
+      div.innerHTML = renderedTemplate;
+      return div;
+    };
+  });
+  
   return {
-    agGridElement,
+    agGridRef,
     gridState,
     gridThemeClass,
     gridCustomStyles,
@@ -1030,7 +1102,18 @@
     applyQuickFilter,
     clearQuickFilter,
     applyPresetFilter,
-    clearPresetFilters
+    clearPresetFilters,
+    // Expose computed properties for the template
+    rowData,
+    columnDefs,
+    defaultColDef,
+    rowClassRules,
+    treeDataColumnDef,
+    getDataPath,
+    detailCellRenderer,
+    onGridReady,
+    handleCellValueChanged,
+    onRowSelected
   };
   }
   };
