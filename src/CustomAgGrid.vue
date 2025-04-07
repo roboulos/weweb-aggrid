@@ -110,8 +110,7 @@ import { debounce } from 'lodash';
 import { AgGridVue } from 'ag-grid-vue3';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
   
-  // Register AG Grid modules globally
-ModuleRegistry.registerModules([AllCommunityModule]);
+  // We'll let AG Grid Vue handle module registration to avoid conflicts
 
 export default {
     name: "wwElement:CustomAgGrid",
@@ -266,15 +265,13 @@ export default {
       if (!window[instanceId]) {
         window[instanceId] = true;
 
-        // Create container for AG Grid resources if it doesn't exist
-        const resourceContainer = document.getElementById('ww-ag-grid-resources') || (() => {
-          const container = document.createElement('div');
-          container.id = 'ww-ag-grid-resources';
-          document.body.appendChild(container);
-          return container;
-        })();
+        // Check if document and head are available (safety check)
+        if (typeof document === 'undefined' || !document.head) {
+          console.warn('Document or document.head not available');
+          return;
+        }
 
-        // Load CSS files if not already loaded
+        // Load CSS files if not already loaded - append to document.head instead
         const cssFiles = [
           'https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css',
           `https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-${props.content?.theme || 'quartz'}.css`
@@ -285,7 +282,7 @@ export default {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = href;
-            resourceContainer.appendChild(link);
+            document.head.appendChild(link);
           }
         }
 
@@ -296,10 +293,8 @@ export default {
         setGridState({ ...gridState.value, scriptLoaded: true, cssLoaded: true });
       }
       
-      // Ensure ModuleRegistry is properly initialized
-      if (!ModuleRegistry.isRegistered(AllCommunityModule)) {
-        ModuleRegistry.registerModules([AllCommunityModule]);
-      }
+      // Don't register modules globally to avoid conflicts with other components
+      // Let AG Grid Vue handle the module registration internally
     } catch (error) {
       console.error('Failed to load AG Grid resources:', error);
       emit('trigger-event', {
